@@ -3,10 +3,13 @@
 One flat row per event, with a `type` column. Only the columns relevant to a
 row need to be filled in, so it's quick to type in a spreadsheet:
 
-    datetime,type,amount_ml,formula_ml,breast_ml,duration_hours,size,watery,supplement
+    datetime,type,amount_ml,left_ml,right_ml,before_weight,formula_ml,breast_ml,duration_hours,size,watery,supplement
 
 type values: breast | bottle | sleep | pee | poop | supplement
-  - breast   : amount_ml = total breast milk (ml)
+  - breast   : amount_ml = total (ml); left_ml / right_ml = per-breast split;
+               before_weight = the "before" weight in grams (feeds the growth
+               chart). Fill left_ml+right_ml+before_weight to preserve the full
+               breakdown; or just amount_ml for a quick total-only entry.
   - bottle   : formula_ml and/or breast_ml (amount_ml is used as formula if set)
   - sleep    : datetime = END time, duration_hours = how long (default 3)
   - pee/poop : size (S/M/L, default M) and watery (1 formed / 2 middle / 3 watery) for poop
@@ -22,6 +25,9 @@ HEADER = [
     "datetime",
     "type",
     "amount_ml",
+    "left_ml",
+    "right_ml",
+    "before_weight",
     "formula_ml",
     "breast_ml",
     "duration_hours",
@@ -78,6 +84,12 @@ def _num(v, default=0.0) -> float:
         return default
 
 
+def _before_weight(f) -> float:
+    """The 'before' weight (first weight entry) of a breast feeding, or 0."""
+    weights = f.get("weights") or []
+    return float(weights[0].get("weight") or 0) if weights else 0.0
+
+
 def export_csv(data: dict) -> str:
     """Serialize all records to CSV (same layout as the import template)."""
     buf = io.StringIO()
@@ -87,30 +99,40 @@ def export_csv(data: dict) -> str:
     feedings = sorted(data.get("feedings", []), key=lambda f: f.get("datetime", ""))
     for f in feedings:
         if f.get("type") == "breast":
-            breast, _, _ = feeding_breast(f)
-            w.writerow([_fmt_dt(f.get("datetime", "")), "breast", round(breast, 1), "", "", "", "", "", ""])
+            breast, left, right = feeding_breast(f)
+            before = _before_weight(f)
+            w.writerow([
+                _fmt_dt(f.get("datetime", "")),
+                "breast",
+                round(breast, 1),  # amount_ml (total)
+                round(left, 1),    # left_ml
+                round(right, 1),   # right_ml
+                before,            # before_weight
+                "", "", "", "", "", "",
+            ])
         else:
             w.writerow([
                 _fmt_dt(f.get("datetime", "")),
                 "bottle",
-                "",
-                round(_num(f.get("bottleFormulaMl")), 1),
-                round(_num(f.get("bottleBreastMl")), 1),
+                "",                                    # amount_ml
+                "", "", "",                            # left_ml, right_ml, before_weight
+                round(_num(f.get("bottleFormulaMl")), 1),  # formula_ml
+                round(_num(f.get("bottleBreastMl")), 1),   # breast_ml (in bottle)
                 "", "", "", "",
             ])
 
     for s in sorted(data.get("sleeps", []), key=lambda s: s.get("endTime", "")):
         view = sleep_view(s)
-        w.writerow([_fmt_dt(view["end"]), "sleep", "", "", "", round(view["hours"], 2), "", "", ""])
+        w.writerow([_fmt_dt(view["end"]), "sleep", "", "", "", "", "", "", round(view["hours"], 2), "", "", ""])
 
     for e in sorted(data.get("eliminations", []), key=lambda e: e.get("datetime", "")):
         if e.get("type") == "poop":
-            w.writerow([_fmt_dt(e.get("datetime", "")), "poop", "", "", "", "", e.get("size", "M"), e.get("watery", 2), ""])
+            w.writerow([_fmt_dt(e.get("datetime", "")), "poop", "", "", "", "", "", "", "", e.get("size", "M"), e.get("watery", 2), ""])
         else:
-            w.writerow([_fmt_dt(e.get("datetime", "")), "pee", "", "", "", "", "", "", ""])
+            w.writerow([_fmt_dt(e.get("datetime", "")), "pee", "", "", "", "", "", "", "", "", "", ""])
 
     for s in sorted(data.get("supplements", []), key=lambda s: s.get("datetime", "")):
-        w.writerow([_fmt_dt(s.get("datetime", "")), "supplement", "", "", "", "", "", "", s.get("name", "")])
+        w.writerow([_fmt_dt(s.get("datetime", "")), "supplement", "", "", "", "", "", "", "", "", "", s.get("name", "")])
 
     return buf.getvalue()
 
@@ -120,13 +142,36 @@ def template_csv() -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(HEADER)
-    w.writerow(["2026-11-01 02:18", "bottle", "", "30", "0", "", "", "", ""])
-    w.writerow(["2026-11-01 08:00", "breast", "60", "", "", "", "", "", ""])
-    w.writerow(["2026-11-01 11:30", "sleep", "", "", "", "2.5", "", "", ""])
-    w.writerow(["2026-11-01 14:00", "poop", "", "", "", "", "M", "2", ""])
-    w.writerow(["2026-11-01 15:00", "pee", "", "", "", "", "", "", ""])
-    w.writerow(["2026-11-01 18:00", "supplement", "", "", "", "", "", "", "Vitamin D"])
+    # breast: total 60 = left 29 + right 31, before weight 5000g
+    w.writerow(["2026-11-01 08:00", "breast", "60", "29", "31", "5000", "", "", "", "", "", ""])
+    # bottle: 30ml formula
+    w.writerow(["2026-11-01 02:18", "bottle", "", "", "", "", "30", "0", "", "", "", ""])
+    w.writerow(["2026-11-01 11:30", "sleep", "", "", "", "", "", "", "2.5", "", "", ""])
+    w.writerow(["2026-11-01 14:00", "poop", "", "", "", "", "", "", "", "M", "2", ""])
+    w.writerow(["2026-11-01 15:00", "pee", "", "", "", "", "", "", "", "", "", ""])
+    w.writerow(["2026-11-01 18:00", "supplement", "", "", "", "", "", "", "", "", "", "Vitamin D"])
     return buf.getvalue()
+
+
+def _breast_weights(before: float, left: float, right: float, amount: float):
+    """Build a weights[] list for a breast feeding from CSV columns.
+
+    Prefers the full breakdown (before + left + right) so the per-breast split
+    and the growth-chart 'before' weight are preserved; falls back to a
+    total-only entry (attributed to the left breast) or a before-only entry.
+    """
+    if left > 0 or right > 0:
+        weights = [{"weight": before, "side": "na"}]
+        if left > 0:
+            weights.append({"weight": before + left, "side": "left"})
+        if right > 0:
+            weights.append({"weight": before + left + right, "side": "right"})
+        return weights
+    if amount > 0:
+        base = before if before > 0 else 0
+        return [{"weight": base, "side": "na"}, {"weight": base + amount, "side": "left"}]
+    # before-only feeding (0 ml) — editable later
+    return [{"weight": before if before > 0 else 0, "side": "na"}]
 
 
 def import_csv(text: str, clear: bool = False):
@@ -155,18 +200,14 @@ def import_csv(text: str, clear: bool = False):
             continue
 
         if raw_type == "breast":
+            before = _num(row.get("before_weight"))
+            left = _num(row.get("left_ml"))
+            right = _num(row.get("right_ml"))
             amount = _num(row.get("amount_ml"))
-            if amount > 0:
-                records.append(("feedings", {
-                    "datetime": dt, "type": "breast",
-                    "weights": [{"weight": 0, "side": "na"}, {"weight": amount, "side": "left"}],
-                }))
-            else:
-                # before-only feeding (0 ml) — editable later
-                records.append(("feedings", {
-                    "datetime": dt, "type": "breast",
-                    "weights": [{"weight": 0, "side": "na"}],
-                }))
+            records.append(("feedings", {
+                "datetime": dt, "type": "breast",
+                "weights": _breast_weights(before, left, right, amount),
+            }))
             imported["feedings"] += 1
         elif raw_type == "bottle":
             formula = _num(row.get("formula_ml"))
