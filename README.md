@@ -31,12 +31,36 @@ Two tabs:
 ### 🌐 Language
 - Toggle **English / 中文** from the button in the top-right corner. The choice is remembered on the device. All labels, buttons, charts, and dates switch instantly.
 
+### 🔗 Shareable URL
+- The current view lives in the URL, so you can copy it and anyone opening it sees exactly the same thing: the **tab** (`timeline`/`insights`), the **date**, the **language** (`en`/`zh`), the **Insights range** (`7`/`14`/`31`/`custom`), and the **Milk-over-the-day compare** (`yesterday`/`3`/`7`/`14`). The URL updates as you navigate, and clicking the 📥 button or switching tabs never loses your place.
+
+### 📥 Import / Export (CSV)
+- The **📥** button in the top bar opens an import/export dialog.
+- **Export** — download all feedings, sleeps, pee/poop, and supplements as a flat CSV (one row per event, with a `type` column).
+- **Template** — download a small template CSV showing one example of each row type. Open it in **Google Sheets**, type your historical rows, export as CSV, then import it here.
+- **Import** — upload a CSV. Check **"Replace existing data"** first if you want to wipe feedings/sleeps/pee-poop/supplements before importing. A summary shows how many rows were imported and any rows that were skipped (with the reason).
+- Only the columns you need are filled in per row — the layout is designed to be quick to type in a spreadsheet:
+
+  ```
+  datetime,type,amount_ml,formula_ml,breast_ml,duration_hours,size,watery,supplement
+  2026-11-01 08:00,breast,60,,,,,,,
+  2026-11-01 02:18,bottle,,30,0,,,,
+  2026-11-01 11:30,sleep,,,,2.5,,,,
+  2026-11-01 14:00,poop,,,,,M,2,,
+  2026-11-01 15:00,pee,,,,,,,,
+  2026-11-01 18:00,supplement,,,,,,,Vitamin D
+  ```
+
+  - `type`: `breast` (use `amount_ml`) · `bottle` (use `formula_ml` and/or `breast_ml`) · `sleep` (`datetime` = end time, `duration_hours`) · `pee` · `poop` (`size` S/M/L, `watery` 1/2/3) · `supplement` (name)
+  - Datetimes accept several formats (e.g. `YYYY-MM-DD HH:MM` or `M/D/YYYY h:MM AM`).
+
 ### Entry details
 - **First-run setup** — asks for the baby's name, birthday, and sex.
 - **Feedings** (with historical backfilling): defaults to the current time, but you can change it and navigate to past days.
-  - **Breast (weight method):** enter multiple weights; the first is the "before" weight, each later one is tagged **Left / Right / N/A**. The app calculates the amount fed for each breast. The "before" weight also feeds the growth chart.
+  - **Breast (weight method):** enter multiple weights; the first is the "before" weight, each later one is tagged **Left / Right / N/A**. The app calculates the amount fed for each breast. The "before" weight also feeds the growth chart. You can **save with just a "before" weight** (it shows as "before weight only") and add more weights later by editing the entry.
   - **Bottle:** enter formula milk (ml) and breast milk (ml). Leave a field empty to treat it as zero.
-- **Sleep** — log by *start + end time* **or** *duration + end time*.
+  - Number fields use **direct entry** (no up/down spinner) so you can type amounts quickly.
+- **Sleep** — log by *duration + end time* (the default) **or** *start + end time*.
 - **Pee & Poop** — track each event; for poop, record **size** (S/M/L, default M) and **watery** (Formed / Middle / Watery, default Middle).
 - **Supplements** — pick from a list (Vitamin D, Probiotic, Iron, Vitamin C) or enter a custom name, with a timestamp.
 - **Persistence** — data is saved to disk on every change, so restarting the server never loses anything.
@@ -97,4 +121,7 @@ the server. Back up that file to back up your data.
 | GET | `/api/timeline?date=` | Chronological activities for a day (overnight sleep split) |
 | GET | `/api/stats?start=&end=` | Time series: milk, sleep, poop, pee, bedtime |
 | GET | `/api/milk-curve?date=&compare=` | Cumulative milk over the day + supplement/poop markers (compare: yesterday/3/7/14) |
+| GET | `/api/export.csv` | Download all data as a flat CSV |
+| GET | `/api/template.csv` | Download a small CSV template (one example row per type) |
+| POST | `/api/import?clear=` | Import a CSV body (`clear=true` wipes feedings/sleeps/pee-poop/supplements first) |
 | GET | `/api/growth` | Weight points + WHO percentile curves + latest percentile |

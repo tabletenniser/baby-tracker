@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 import store
 from models import (
@@ -770,6 +770,56 @@ def growth():
         "curves": curves,
         "latest": latest,
     }
+
+
+# --------------------------------------------------------------------------- #
+# CSV import / export (Google-Sheets friendly)
+# --------------------------------------------------------------------------- #
+@app.get("/api/export.csv")
+def export_csv_endpoint():
+    import csvio  # lazy: csvio imports helpers from this module
+
+    data = store.read()
+    return Response(
+        content=csvio.export_csv(data),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=baby-tracker.csv"},
+    )
+
+
+@app.get("/api/template.csv")
+def template_csv_endpoint():
+    import csvio
+
+    return Response(
+        content=csvio.template_csv(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=baby-tracker-template.csv"},
+    )
+
+
+@app.post("/api/import")
+async def import_csv_endpoint(request: Request, clear: bool = False):
+    import csvio
+
+    body = await request.body()
+    text = body.decode("utf-8-sig")  # utf-8-sig strips a BOM from Excel/Sheets
+    if not text.strip():
+        raise HTTPException(400, "empty file")
+    records, summary = csvio.import_csv(text, clear=clear)
+
+    def mut(data):
+        if clear:
+            data["feedings"] = []
+            data["sleeps"] = []
+            data["eliminations"] = []
+            data["supplements"] = []
+        for kind, payload in records:
+            payload["id"] = store.new_id()
+            data[kind].append(payload)
+
+    store.write(mut)
+    return summary
 
 
 # --------------------------------------------------------------------------- #

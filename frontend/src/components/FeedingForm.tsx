@@ -94,7 +94,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
       const valid = weights.filter(
         (r) => r.weight.trim() !== "" && !isNaN(parseFloat(r.weight))
       );
-      if (valid.length < 2) {
+      if (valid.length < 1) {
         setError(t("feeding.needWeights"));
         return;
       }

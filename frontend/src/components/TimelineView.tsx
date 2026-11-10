@@ -46,9 +46,11 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
   for (const f of data.feedings) {
     const detail =
       f.type === "breast"
-        ? `${t("item.total")} ${formatMl(f.breastMl, lang)}${
-            f.leftMl > 0 ? ` · ${t("item.left")} ${formatMl(f.leftMl, lang)}` : ""
-          }${f.rightMl > 0 ? ` · ${t("item.right")} ${formatMl(f.rightMl, lang)}` : ""}`
+        ? f.breastMl > 0
+          ? `${t("item.total")} ${formatMl(f.breastMl, lang)}${
+              f.leftMl > 0 ? ` · ${t("item.left")} ${formatMl(f.leftMl, lang)}` : ""
+            }${f.rightMl > 0 ? ` · ${t("item.right")} ${formatMl(f.rightMl, lang)}` : ""}`
+          : t("item.beforeOnly")
         : `${t("item.formula")} ${formatMl(f.formulaMl, lang)}${
             f.breastMl > 0 ? ` · ${t("item.breastMl")} ${formatMl(f.breastMl, lang)}` : ""
           }`;

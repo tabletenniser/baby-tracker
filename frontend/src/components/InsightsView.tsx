@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getUrlParam, setUrlParam } from "../url";
 import {
   Area,
   AreaChart,
@@ -90,11 +91,18 @@ function PoopChart({ data }: { data: CountPoint[] }) {
 export function InsightsView() {
   const { t } = useLang();
   const today = todayStr();
-  const [range, setRange] = useState<Range>("14");
+  const [range, setRange] = useState<Range>(() => {
+    const r = getUrlParam("range");
+    return r === "7" || r === "14" || r === "31" || r === "custom" ? r : "14";
+  });
   const [customStart, setCustomStart] = useState(addDays(today, -13));
   const [customEnd, setCustomEnd] = useState(today);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [growth, setGrowth] = useState<GrowthData | null>(null);
+
+  useEffect(() => {
+    setUrlParam("range", range);
+  }, [range]);
 
   const start = range === "custom" ? customStart : addDays(today, -(parseInt(range, 10) - 1));
   const end = range === "custom" ? customEnd : today;

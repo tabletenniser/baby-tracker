@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { getBaby } from "./api";
 import { addDays, ageLabel, todayStr } from "./dates";
 import { useLang } from "./i18n";
+import { getUrlParam, setUrlParam } from "./url";
 import type { Baby } from "./types";
 import { InsightsView } from "./components/InsightsView";
+import { DataModal } from "./components/DataModal";
 import { ProfileModal } from "./components/ProfileModal";
 import { SetupScreen } from "./components/SetupScreen";
 import { TimelineView } from "./components/TimelineView";
@@ -14,10 +16,25 @@ export default function App() {
   const { lang, setLang, t } = useLang();
   const [baby, setBaby] = useState<Baby | null>(null);
   const [loading, setLoading] = useState(true);
-  const [date, setDate] = useState(todayStr());
-  const [tab, setTab] = useState<Tab>("timeline");
+  const [date, setDate] = useState(() => {
+    const d = getUrlParam("date");
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : todayStr();
+  });
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = getUrlParam("tab");
+    return t === "insights" ? "insights" : "timeline";
+  });
   const [showProfile, setShowProfile] = useState(false);
+  const [showData, setShowData] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
+
+  // Keep the current view in the URL so it can be copied/shared.
+  useEffect(() => {
+    setUrlParam("tab", tab);
+  }, [tab]);
+  useEffect(() => {
+    setUrlParam("date", date);
+  }, [date]);
 
   useEffect(() => {
     getBaby()
@@ -79,6 +96,14 @@ export default function App() {
           </button>
         </div>
         <button
+          className="btn icon data-toggle"
+          onClick={() => setShowData(true)}
+          aria-label={t("data.title")}
+          title={t("data.title")}
+        >
+          📥
+        </button>
+        <button
           className="lang-toggle"
           onClick={() => setLang(lang === "en" ? "zh" : "en")}
           aria-label="language"
@@ -121,6 +146,8 @@ export default function App() {
           }}
         />
       )}
+
+      {showData && <DataModal onClose={() => setShowData(false)} />}
     </div>
   );
 }

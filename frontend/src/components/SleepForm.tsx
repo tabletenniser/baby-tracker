@@ -13,7 +13,7 @@ interface Props {
 
 export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
   const { lang, t } = useLang();
-  const [mode, setMode] = useState<SleepMode>(initial?.mode ?? "start_end");
+  const [mode, setMode] = useState<SleepMode>(initial?.mode ?? "duration_end");
   const [startTime, setStartTime] = useState(() => {
     if (initial?.startTime) return initial.startTime;
     const end = new Date(defaultDateTime(date));

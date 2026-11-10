@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getMilkCurve } from "../api";
 import { useLang } from "../i18n";
+import { getUrlParam, setUrlParam } from "../url";
 import type { MilkCurveData } from "../types";
 import {
   CartesianGrid,
@@ -57,8 +58,15 @@ function eventDot(props: any) {
  */
 export function MilkCurve({ date }: { date: string }) {
   const { t } = useLang();
-  const [compare, setCompare] = useState<Compare>("yesterday");
+  const [compare, setCompare] = useState<Compare>(() => {
+    const c = getUrlParam("compare");
+    return c === "yesterday" || c === "3" || c === "7" || c === "14" ? c : "yesterday";
+  });
   const [data, setData] = useState<MilkCurveData | null>(null);
+
+  useEffect(() => {
+    setUrlParam("compare", compare);
+  }, [compare]);
 
   useEffect(() => {
     let cancelled = false;

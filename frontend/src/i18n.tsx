@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { getUrlParam, setUrlParam } from "./url";
 
 export type Lang = "en" | "zh";
 
@@ -27,6 +28,7 @@ const en: Record<string, string> = {
   "add.supplement": "💊 Supplement",
 
   "item.breast": "Breast",
+  "item.beforeOnly": "before weight only",
   "item.bottle": "Bottle",
   "item.sleep": "Sleep",
   "item.sleptUntil": "Slept until",
@@ -65,7 +67,7 @@ const en: Record<string, string> = {
   "feeding.right": "Right",
   "feeding.na": "N/A",
   "feeding.needTime": "Please set a time.",
-  "feeding.needWeights": "Add at least two weights to calculate the amount fed.",
+  "feeding.needWeights": "Add a before weight to save — you can add more weights later to calculate the amount.",
   "feeding.side": "Side",
   "feeding.after": "after",
 
@@ -169,6 +171,16 @@ const en: Record<string, string> = {
   "cutoff.label": "Day starts",
   "cutoff.override": "This day only",
   "cutoff.clear": "Reset",
+
+  "data.title": "📥 Import / Export",
+  "data.export": "⬇️ Export all data (CSV)",
+  "data.template": "📄 Download template",
+  "data.import": "⬆️ Import from CSV",
+  "data.replace": "Replace existing data (clears feedings, sleeps, pee/poop, supplements first)",
+  "data.hint": "Tip: open the template in Google Sheets, type your rows, then export as CSV and import it here.",
+  "data.result": "Imported {feedings} feedings, {sleeps} sleeps, {eliminations} pee/poop, {supplements} supplements. {skipped} skipped.",
+  "data.chooseFile": "Choose CSV…",
+  "data.importing": "Importing…",
 };
 
 const zh: Record<string, string> = {
@@ -196,6 +208,7 @@ const zh: Record<string, string> = {
   "add.supplement": "💊 补充剂",
 
   "item.breast": "母乳",
+  "item.beforeOnly": "仅喂奶前体重",
   "item.bottle": "奶瓶",
   "item.sleep": "睡眠",
   "item.sleptUntil": "睡到",
@@ -234,7 +247,7 @@ const zh: Record<string, string> = {
   "feeding.right": "右",
   "feeding.na": "无",
   "feeding.needTime": "请设置时间。",
-  "feeding.needWeights": "请添加至少两个体重来计算奶量。",
+  "feeding.needWeights": "请添加喂奶前体重以保存，之后可再添加体重来计算奶量。",
   "feeding.side": "侧",
   "feeding.after": "喂奶后",
 
@@ -338,6 +351,16 @@ const zh: Record<string, string> = {
   "cutoff.label": "一天从",
   "cutoff.override": "仅今天",
   "cutoff.clear": "重置",
+
+  "data.title": "📥 导入 / 导出",
+  "data.export": "⬇️ 导出全部数据（CSV）",
+  "data.template": "📄 下载模板",
+  "data.import": "⬆️ 从 CSV 导入",
+  "data.replace": "替换现有数据（先清空喂奶、睡眠、尿/便、补充剂）",
+  "data.hint": "提示：在 Google 表格中打开模板，输入数据行，导出为 CSV 后在此导入。",
+  "data.result": "已导入 {feedings} 次喂奶、{sleeps} 次睡眠、{eliminations} 次尿/便、{supplements} 次补充剂。跳过 {skipped} 行。",
+  "data.chooseFile": "选择 CSV…",
+  "data.importing": "导入中…",
 };
 
 const translations: Record<Lang, Record<string, string>> = { en, zh };
@@ -380,6 +403,8 @@ export function useLang() {
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
+    const fromUrl = getUrlParam("lang");
+    if (fromUrl === "en" || fromUrl === "zh") return fromUrl;
     try {
       return localStorage.getItem("baby-lang") === "zh" ? "zh" : "en";
     } catch {
@@ -389,6 +414,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 
   const setLang = (l: Lang) => {
     setLangState(l);
+    setUrlParam("lang", l);
     try {
       localStorage.setItem("baby-lang", l);
     } catch {

@@ -133,6 +133,20 @@ h2 {
   background: var(--primary-soft);
 }
 
+.data-toggle {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  min-height: var(--tap);
+  cursor: pointer;
+  line-height: 1;
+}
+.data-toggle:active {
+  background: var(--primary-soft);
+}
+
 .date-nav {
   display: flex;
   align-items: center;
@@ -234,6 +248,17 @@ select:focus {
   outline: 2px solid var(--primary);
   outline-offset: 1px;
   border-color: var(--primary);
+}
+
+/* Hide the up/down spinner dials on number inputs — type the value directly. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .row-2 {
@@ -440,6 +465,44 @@ select:focus {
   padding: 10px 12px;
   font-size: 0.88rem;
   margin-bottom: 12px;
+}
+
+/* Data (import/export) modal */
+.data-modal .btn {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 10px;
+}
+.data-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--ink);
+  margin: 6px 0 14px;
+  cursor: pointer;
+}
+.data-check input {
+  width: auto;
+  min-height: 0;
+}
+.data-hint {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 4px 0 14px;
+}
+.data-result {
+  background: var(--primary-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+.err-line {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 4px;
 }
 
 /* ------------------------------------------------- Larger screens (iPad+) */
