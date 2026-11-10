@@ -92,6 +92,23 @@ def cutoff_for(date: str, data: dict) -> str:
     )
 
 
+def day_for(iso: str, data: dict) -> str:
+    """The cutoff-aware calendar date a record at `iso` belongs to.
+
+    A day D spans [D + cutoff, D+1 + cutoff). A record before that day's
+    cutoff (e.g. 1am with a 3am cutoff) belongs to the previous day.
+    """
+    dt = datetime.fromisoformat(iso)
+    d0 = dt.date().isoformat()
+    def in_window(d: str) -> bool:
+        st, en = day_bounds(d, cutoff_for(d, data))
+        return st <= dt < en
+    if in_window(d0):
+        return d0
+    prev = (dt.date() - timedelta(days=1)).isoformat()
+    return prev if in_window(prev) else d0
+
+
 def date_range(start: str, end: str):
     d = datetime.fromisoformat(start + "T00:00:00")
     stop = datetime.fromisoformat(end + "T00:00:00")
@@ -192,16 +209,16 @@ def daily_summary(date: str, data: Optional[dict] = None) -> dict:
         data = store.read()
     breast = formula = 0.0
     for f in data["feedings"]:
-        if date_of(f["datetime"]) == date:
+        if day_for(f["datetime"], data) == date:
             b, _, _ = feeding_breast(f)
             breast += b
             formula += feeding_formula(f)
     sleep_hours = 0.0
     for s in data["sleeps"]:
         sleep_hours += sleep_overlap_hours(sleep_view(s), date, data)
-    pee = sum(1 for e in data["eliminations"] if e["type"] == "pee" and date_of(e["datetime"]) == date)
-    poop = sum(1 for e in data["eliminations"] if e["type"] == "poop" and date_of(e["datetime"]) == date)
-    supps = sorted({s["name"] for s in data["supplements"] if date_of(s["datetime"]) == date})
+    pee = sum(1 for e in data["eliminations"] if e["type"] == "pee" and day_for(e["datetime"], data) == date)
+    poop = sum(1 for e in data["eliminations"] if e["type"] == "poop" and day_for(e["datetime"], data) == date)
+    supps = sorted({s["name"] for s in data["supplements"] if day_for(s["datetime"], data) == date})
     total = breast + formula
     return {
         "date": date,
@@ -317,9 +334,10 @@ def set_day_cutoff(body: DayCutoffSet):
 # --------------------------------------------------------------------------- #
 @app.get("/api/feedings")
 def list_feedings(date: Optional[str] = None):
-    feedings = store.read()["feedings"]
+    data = store.read()
+    feedings = data["feedings"]
     if date:
-        feedings = [f for f in feedings if date_of(f["datetime"]) == date]
+        feedings = [f for f in feedings if day_for(f["datetime"], data) == date]
     feedings = sorted(feedings, key=lambda f: f["datetime"])
     return [feeding_view(f) for f in feedings]
 
@@ -429,9 +447,10 @@ def delete_sleep(sid: str):
 # --------------------------------------------------------------------------- #
 @app.get("/api/eliminations")
 def list_eliminations(date: Optional[str] = None):
-    elim = store.read()["eliminations"]
+    data = store.read()
+    elim = data["eliminations"]
     if date:
-        elim = [e for e in elim if date_of(e["datetime"]) == date]
+        elim = [e for e in elim if day_for(e["datetime"], data) == date]
     elim = sorted(elim, key=lambda e: e["datetime"])
     return elim
 
@@ -483,9 +502,10 @@ def delete_elimination(eid: str):
 # --------------------------------------------------------------------------- #
 @app.get("/api/supplements")
 def list_supplements(date: Optional[str] = None):
-    supps = store.read()["supplements"]
+    data = store.read()
+    supps = data["supplements"]
     if date:
-        supps = [s for s in supps if date_of(s["datetime"]) == date]
+        supps = [s for s in supps if day_for(s["datetime"], data) == date]
     supps = sorted(supps, key=lambda s: s["datetime"])
     return supps
 
@@ -564,9 +584,9 @@ def timeline(date: str):
     cutoff = cutoff_for(date, data)
     dstart, _ = day_bounds(date, cutoff)
 
-    feedings = [feeding_view(f) for f in data["feedings"] if date_of(f["datetime"]) == date]
-    eliminations = [e for e in data["eliminations"] if date_of(e["datetime"]) == date]
-    supplements = [s for s in data["supplements"] if date_of(s["datetime"]) == date]
+    feedings = [feeding_view(f) for f in data["feedings"] if day_for(f["datetime"], data) == date]
+    eliminations = [e for e in data["eliminations"] if day_for(e["datetime"], data) == date]
+    supplements = [s for s in data["supplements"] if day_for(s["datetime"], data) == date]
 
     sleeps = []
     for s in data["sleeps"]:
