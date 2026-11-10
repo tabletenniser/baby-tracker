@@ -42,6 +42,44 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
   );
 }
 
+function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
+  const { lang, t } = useLang();
+  const leftTotal = data.reduce((s, d) => s + (d.left || 0), 0);
+  const rightTotal = data.reduce((s, d) => s + (d.right || 0), 0);
+  const grand = leftTotal + rightTotal;
+  const leftPct = grand > 0 ? Math.round((leftTotal / grand) * 100) : 0;
+  return (
+    <section className="card">
+      <h2 className="card-title">{t("insights.balance")}</h2>
+      {grand > 0 ? (
+        <div className="balance-summary">
+          <span className="balance-chip left">
+            {t("insights.left")}: <b>{Math.round(leftTotal)} ml</b> ({leftPct}%)
+          </span>
+          <span className="balance-chip right">
+            {t("insights.right")}: <b>{Math.round(rightTotal)} ml</b> ({100 - leftPct}%)
+          </span>
+        </div>
+      ) : (
+        <div className="empty">{t("insights.noBreast")}</div>
+      )}
+      <div className="chart">
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
+            <Legend />
+            <Bar dataKey="left" stackId="a" fill="#ff7aa2" name={t("insights.left")} />
+            <Bar dataKey="right" stackId="a" fill="#f0b8d0" name={t("insights.right")} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+}
+
 function SleepChart({ data }: { data: HourPoint[] }) {
   const { lang, t } = useLang();
   return (
@@ -172,6 +210,7 @@ export function InsightsView() {
       {stats && (
         <>
           <MilkChart data={stats.milk} />
+          <BreastBalanceChart data={stats.milk} />
           <SleepChart data={stats.sleep} />
           <PoopChart data={stats.poop} />
           <section className="card">

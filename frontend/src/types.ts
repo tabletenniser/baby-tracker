@@ -131,6 +131,8 @@ export interface MilkPoint {
   breast: number;
   formula: number;
   total: number;
+  left: number;
+  right: number;
 }
 export interface HourPoint {
   date: string;

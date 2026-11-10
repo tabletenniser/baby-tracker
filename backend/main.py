@@ -207,11 +207,13 @@ def validate_sleep(s: SleepCreate):
 def daily_summary(date: str, data: Optional[dict] = None) -> dict:
     if data is None:
         data = store.read()
-    breast = formula = 0.0
+    breast = formula = left = right = 0.0
     for f in data["feedings"]:
         if day_for(f["datetime"], data) == date:
-            b, _, _ = feeding_breast(f)
+            b, l, r = feeding_breast(f)
             breast += b
+            left += l
+            right += r
             formula += feeding_formula(f)
     sleep_hours = 0.0
     for s in data["sleeps"]:
@@ -223,6 +225,8 @@ def daily_summary(date: str, data: Optional[dict] = None) -> dict:
     return {
         "date": date,
         "breastMl": round(breast, 1),
+        "leftMl": round(left, 1),
+        "rightMl": round(right, 1),
         "formulaMl": round(formula, 1),
         "totalMl": round(total, 1),
         "sleepHours": round(sleep_hours, 2),
@@ -618,7 +622,7 @@ def stats(start: str, end: str):
     milk, sleep, poop, pee = [], [], [], []
     for d in date_range(start, end):
         ds = daily_summary(d, data)
-        milk.append({"date": d, "breast": ds["breastMl"], "formula": ds["formulaMl"], "total": ds["totalMl"]})
+        milk.append({"date": d, "breast": ds["breastMl"], "formula": ds["formulaMl"], "total": ds["totalMl"], "left": ds["leftMl"], "right": ds["rightMl"]})
         sleep.append({"date": d, "hours": ds["sleepHours"]})
         poop.append({"date": d, "count": ds["poopCount"]})
         pee.append({"date": d, "count": ds["peeCount"]})

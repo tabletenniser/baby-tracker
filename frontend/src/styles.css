@@ -791,6 +791,25 @@ input[type="number"] {
   font-size: 1rem;
   line-height: 1.5;
 }
+.balance-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.balance-chip {
+  font-size: 0.9rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+.balance-chip.left {
+  background: #ff7aa2;
+}
+.balance-chip.right {
+  background: #f0b8d0;
+  color: #7a3b58;
+}
 .growth-latest {
   font-size: 1rem;
   margin-bottom: 10px;
