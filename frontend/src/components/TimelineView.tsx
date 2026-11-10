@@ -20,6 +20,7 @@ import { DayCutoffControl } from "./DayCutoffControl";
 import { EliminationForm } from "./EliminationForm";
 import { FeedingForm } from "./FeedingForm";
 import { FeedingTrend } from "./FeedingTrend";
+import { MilkCurve } from "./MilkCurve";
 import { Modal } from "./Modal";
 import { SleepForm } from "./SleepForm";
 import { SupplementForm } from "./SupplementForm";
@@ -244,6 +245,8 @@ export function TimelineView({ date, refreshSignal }: Props) {
           ))}
         </div>
       </section>
+
+      <MilkCurve date={date} />
 
       <FeedingTrend />
 

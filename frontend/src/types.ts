@@ -109,6 +109,23 @@ export interface TimelineData {
   cutoff: string;
 }
 
+export interface CurvePoint {
+  t: number; // hours since the day's cutoff (0..24)
+  ml: number; // cumulative ml up to that time
+}
+export interface CurveEvent {
+  t: number;
+  ml: number;
+  type: "supplement" | "poop";
+}
+export interface MilkCurveData {
+  cutoff: string;
+  today: CurvePoint[];
+  compare: CurvePoint[] | null;
+  compareDays: number;
+  events: CurveEvent[];
+}
+
 export interface MilkPoint {
   date: string;
   breast: number;

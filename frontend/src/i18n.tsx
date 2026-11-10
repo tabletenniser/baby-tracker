@@ -156,6 +156,16 @@ const en: Record<string, string> = {
   "trend.avg14": "14-day avg",
   "trend.soFar": "so far",
 
+  "curve.title": "🥛 Milk over the day",
+  "curve.today": "Today",
+  "curve.yesterday": "Yesterday",
+  "curve.avg3": "3-day avg",
+  "curve.avg7": "7-day avg",
+  "curve.avg14": "14-day avg",
+  "curve.noCompare": "No data to compare yet",
+  "curve.supplement": "Supplement",
+  "curve.poop": "Poop",
+
   "cutoff.label": "Day starts",
   "cutoff.override": "This day only",
   "cutoff.clear": "Reset",
@@ -314,6 +324,16 @@ const zh: Record<string, string> = {
   "trend.avg7": "7天平均",
   "trend.avg14": "14天平均",
   "trend.soFar": "目前",
+
+  "curve.title": "🥛 全天奶量",
+  "curve.today": "今天",
+  "curve.yesterday": "昨天",
+  "curve.avg3": "3天平均",
+  "curve.avg7": "7天平均",
+  "curve.avg14": "14天平均",
+  "curve.noCompare": "暂无对比数据",
+  "curve.supplement": "补充剂",
+  "curve.poop": "大便",
 
   "cutoff.label": "一天从",
   "cutoff.override": "仅今天",

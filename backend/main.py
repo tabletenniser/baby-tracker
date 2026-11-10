@@ -632,6 +632,102 @@ def stats(start: str, end: str):
 
 
 # --------------------------------------------------------------------------- #
+# Milk curve (cumulative milk over the day, for the timeline)
+# --------------------------------------------------------------------------- #
+_GRID = [i * 0.5 for i in range(49)]  # 0..24 hours in 30-min steps
+
+
+def _add_days(date: str, n: int) -> str:
+    return (datetime.fromisoformat(date + "T00:00:00") + timedelta(days=n)).strftime("%Y-%m-%d")
+
+
+def _day_feedings_offsets(date: str, data: dict, cutoff: str):
+    """Sorted (offset_hours, total_ml) for feedings attributed to `date` (cutoff-aware).
+
+    Attribution uses day_for (same as the rest of the app) so per-day overrides
+    stay consistent; the offset is measured from this day's cutoff.
+    """
+    st, _ = day_bounds(date, cutoff)
+    out = []
+    for f in data["feedings"]:
+        if day_for(f["datetime"], data) != date:
+            continue
+        dt = datetime.fromisoformat(f["datetime"])
+        breast, _, _ = feeding_breast(f)
+        total = breast + feeding_formula(f)
+        out.append(((dt - st).total_seconds() / 3600.0, total))
+    out.sort()
+    return out
+
+
+def _cumulative_curve(offsets):
+    """Cumulative ml at each grid point for a day's feeding offsets."""
+    return [
+        {"t": t, "ml": round(sum(ml for off, ml in offsets if off <= t), 1)}
+        for t in _GRID
+    ]
+
+
+@app.get("/api/milk-curve")
+def milk_curve(date: str, compare: str = "yesterday"):
+    data = store.read()
+    cutoff = cutoff_for(date, data)
+    today_curve = _cumulative_curve(_day_feedings_offsets(date, data, cutoff))
+
+    compare_curve = None
+    compare_days = 0
+    if compare == "yesterday":
+        prev = _add_days(date, -1)
+        compare_curve = _cumulative_curve(_day_feedings_offsets(prev, data, cutoff_for(prev, data)))
+        compare_days = 1
+    else:
+        try:
+            n = int(compare)
+        except (TypeError, ValueError):
+            n = 7
+        curves = []
+        for i in range(1, n + 1):
+            d = _add_days(date, -i)
+            offs = _day_feedings_offsets(d, data, cutoff_for(d, data))
+            if not offs:
+                continue  # no feedings that day -> exclude from the average
+            curves.append(_cumulative_curve(offs))
+        if curves:
+            compare_curve = [
+                {"t": curves[0][i]["t"], "ml": round(sum(c[i]["ml"] for c in curves) / len(curves), 1)}
+                for i in range(len(curves[0]))
+            ]
+            compare_days = len(curves)
+
+    # events (supplements + poops) on the selected day, with cumulative ml at that time
+    st, _ = day_bounds(date, cutoff)
+    offsets = _day_feedings_offsets(date, data, cutoff)
+    events = []
+    for s in data["supplements"]:
+        if day_for(s["datetime"], data) != date:
+            continue
+        dt = datetime.fromisoformat(s["datetime"])
+        off = (dt - st).total_seconds() / 3600.0
+        ml = sum(m for o, m in offsets if o <= off)
+        events.append({"t": round(off, 3), "ml": round(ml, 1), "type": "supplement"})
+    for e in data["eliminations"]:
+        if e.get("type") != "poop" or day_for(e["datetime"], data) != date:
+            continue
+        dt = datetime.fromisoformat(e["datetime"])
+        off = (dt - st).total_seconds() / 3600.0
+        ml = sum(m for o, m in offsets if o <= off)
+        events.append({"t": round(off, 3), "ml": round(ml, 1), "type": "poop"})
+
+    return {
+        "cutoff": cutoff,
+        "today": today_curve,
+        "compare": compare_curve,
+        "compareDays": compare_days,
+        "events": events,
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Growth (weight measurements + WHO percentile curves)
 # --------------------------------------------------------------------------- #
 @app.get("/api/growth")

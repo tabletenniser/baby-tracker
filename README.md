@@ -18,6 +18,7 @@ Two tabs:
 - A **chronological list** of the day's activities (ascending time), with one-tap **add** buttons for **Feeding / Sleep / Pee-Poop / Supplement** (each opens a modal), plus edit/delete on every entry.
 - **Overnight sleep handled correctly** — a sleep that runs past midnight is split across the two days: it shows at its start time on the first day and as "Slept until HH:MM (from HH:MM prev night)" on the next day, and each day's sleep total only counts its own portion.
 - **Day-cutoff** — controls where one day ends and the next begins for sleep attribution. Set a **global** default in the profile (default 12:00 AM) and an **optional per-day override** right in the timeline header (e.g. set it to 3:00 AM for a night the baby sleeps past 3). A "Reset" button clears a day's override.
+- **Milk over the day** — a cumulative milk curve whose x-axis runs from the day's cutoff to the next cutoff (e.g. 3 AM → 3 AM) and whose y-axis is the running total of milk. 💊 dots mark supplements and 💩 dots mark poops. Toggle compares **today vs yesterday** or **today vs the 3/7/14-day average** (days with no feedings are excluded from the average, not counted as zero).
 - **Feeding trend** — a 14-day bar chart at the bottom showing today vs yesterday vs 7-day and 14-day averages, with reference lines for the two averages.
 
 ### 📊 Insights (visualization)
@@ -95,4 +96,5 @@ the server. Back up that file to back up your data.
 | GET | `/api/daily?date=` | Daily summary (incl. total milk + supplements) |
 | GET | `/api/timeline?date=` | Chronological activities for a day (overnight sleep split) |
 | GET | `/api/stats?start=&end=` | Time series: milk, sleep, poop, pee, bedtime |
+| GET | `/api/milk-curve?date=&compare=` | Cumulative milk over the day + supplement/poop markers (compare: yesterday/3/7/14) |
 | GET | `/api/growth` | Weight points + WHO percentile curves + latest percentile |

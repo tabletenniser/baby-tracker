@@ -7,6 +7,7 @@ import type {
   Feeding,
   FeedingInput,
   GrowthData,
+  MilkCurveData,
   Sleep,
   SleepInput,
   StatsData,
@@ -92,6 +93,10 @@ export const getTimeline = (date: string) => request<TimelineData>(`/api/timelin
 // Stats
 export const getStats = (start: string, end: string) =>
   request<StatsData>(`/api/stats?start=${start}&end=${end}`);
+
+// Milk curve (cumulative milk over the day)
+export const getMilkCurve = (date: string, compare: string) =>
+  request<MilkCurveData>(`/api/milk-curve?date=${date}&compare=${compare}`);
 
 // Growth
 export const getGrowth = () => request<GrowthData>("/api/growth");
