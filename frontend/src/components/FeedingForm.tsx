@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { api } from "../api";
+import { createFeeding, updateFeeding } from "../api";
 import { defaultDateTime } from "../dates";
 import type { Feeding, FeedingInput, FeedingType, Side } from "../types";
 
@@ -107,8 +107,8 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
     setSaving(true);
     setError(null);
     try {
-      if (initial) await api.updateFeeding(initial.id, input);
-      else await api.createFeeding(input);
+      if (initial) await updateFeeding(initial.id, input);
+      else await createFeeding(input);
       onSubmit();
     } catch (e) {
       setError(String(e));

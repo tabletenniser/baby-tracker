@@ -12,8 +12,12 @@ PoopSize = Literal["S", "M", "L"]
 WateryLevel = Literal[1, 2, 3]
 
 
+Sex = Literal["male", "female"]
+
+
 class Baby(BaseModel):
     birthday: Optional[str] = None  # YYYY-MM-DD
+    sex: Optional[Sex] = None  # for the growth chart
 
 
 class WeightEntry(BaseModel):
@@ -69,11 +73,22 @@ class VitaminD(BaseModel):
     time: Optional[str] = None  # local ISO
 
 
+class SupplementCreate(BaseModel):
+    name: str  # e.g. "Vitamin D", "Probiotic"
+    datetime: str  # local ISO
+
+
+class Supplement(SupplementCreate):
+    id: str
+
+
 class DailySummary(BaseModel):
     date: str
     breastMl: float
     formulaMl: float
+    totalMl: float
     sleepHours: float
     peeCount: int
     poopCount: int
-    vitaminD: bool
+    supplements: List[str]  # names of supplements taken that day
+    vitaminD: bool = False  # deprecated, kept for back-compat

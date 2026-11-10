@@ -2,13 +2,18 @@ import type { DailySummary } from "../types";
 import { formatHours, formatMl } from "../dates";
 
 export function DailySummaryCard({ daily }: { daily: DailySummary }) {
+  const supps = daily.supplements.length ? daily.supplements.join(", ") : "—";
   return (
     <section className="card summary">
-      <h2 className="card-title">Today's totals</h2>
+      <h2 className="card-title">Totals</h2>
       <div className="summary-grid">
+        <div className="stat stat-total">
+          <div className="stat-value">{formatMl(daily.totalMl)}</div>
+          <div className="stat-label">🥛 Total milk</div>
+        </div>
         <div className="stat">
           <div className="stat-value">{formatMl(daily.breastMl)}</div>
-          <div className="stat-label">🤱 Breast milk</div>
+          <div className="stat-label">🤱 Breast</div>
         </div>
         <div className="stat">
           <div className="stat-value">{formatMl(daily.formulaMl)}</div>
@@ -27,8 +32,8 @@ export function DailySummaryCard({ daily }: { daily: DailySummary }) {
           <div className="stat-label">💩 Poop</div>
         </div>
         <div className="stat">
-          <div className="stat-value">{daily.vitaminD ? "✅" : "—"}</div>
-          <div className="stat-label">☀️ Vitamin D</div>
+          <div className="stat-value stat-supps">{supps}</div>
+          <div className="stat-label">💊 Supplements</div>
         </div>
       </div>
     </section>

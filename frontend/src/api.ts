@@ -5,15 +5,18 @@ import type {
   EliminationInput,
   Feeding,
   FeedingInput,
+  GrowthData,
   Sleep,
   SleepInput,
-  VitaminDRec,
+  StatsData,
+  Supplement,
+  TimelineData,
 } from "./types";
 
-async function req<T>(path: string, opts?: RequestInit): Promise<T> {
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     headers: { "Content-Type": "application/json" },
-    ...opts,
+    ...options,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -22,40 +25,60 @@ async function req<T>(path: string, opts?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const api = {
-  getBaby: () => req<Baby>("/api/baby"),
-  setBaby: (birthday: string) =>
-    req<Baby>("/api/baby", { method: "PUT", body: JSON.stringify({ birthday }) }),
+// Baby
+export const getBaby = () => request<Baby>("/api/baby");
+export const setBaby = (baby: Baby) =>
+  request<Baby>("/api/baby", { method: "PUT", body: JSON.stringify(baby) });
 
-  getFeedings: (date?: string) =>
-    req<Feeding[]>(`/api/feedings${date ? `?date=${date}` : ""}`),
-  createFeeding: (f: FeedingInput) =>
-    req<Feeding>("/api/feedings", { method: "POST", body: JSON.stringify(f) }),
-  updateFeeding: (id: string, f: FeedingInput) =>
-    req<Feeding>(`/api/feedings/${id}`, { method: "PUT", body: JSON.stringify(f) }),
-  deleteFeeding: (id: string) => req(`/api/feedings/${id}`, { method: "DELETE" }),
+// Feedings
+export const getFeedings = (date?: string) =>
+  request<Feeding[]>(`/api/feedings${date ? `?date=${date}` : ""}`);
+export const createFeeding = (f: FeedingInput) =>
+  request<Feeding>("/api/feedings", { method: "POST", body: JSON.stringify(f) });
+export const updateFeeding = (id: string, f: FeedingInput) =>
+  request<Feeding>(`/api/feedings/${id}`, { method: "PUT", body: JSON.stringify(f) });
+export const deleteFeeding = (id: string) =>
+  request<{ ok: boolean }>(`/api/feedings/${id}`, { method: "DELETE" });
 
-  getSleeps: (date?: string) => req<Sleep[]>(`/api/sleeps${date ? `?date=${date}` : ""}`),
-  createSleep: (s: SleepInput) =>
-    req<Sleep>("/api/sleeps", { method: "POST", body: JSON.stringify(s) }),
-  updateSleep: (id: string, s: SleepInput) =>
-    req<Sleep>(`/api/sleeps/${id}`, { method: "PUT", body: JSON.stringify(s) }),
-  deleteSleep: (id: string) => req(`/api/sleeps/${id}`, { method: "DELETE" }),
+// Sleep
+export const getSleeps = (date?: string) =>
+  request<Sleep[]>(`/api/sleeps${date ? `?date=${date}` : ""}`);
+export const createSleep = (s: SleepInput) =>
+  request<Sleep>("/api/sleeps", { method: "POST", body: JSON.stringify(s) });
+export const updateSleep = (id: string, s: SleepInput) =>
+  request<Sleep>(`/api/sleeps/${id}`, { method: "PUT", body: JSON.stringify(s) });
+export const deleteSleep = (id: string) =>
+  request<{ ok: boolean }>(`/api/sleeps/${id}`, { method: "DELETE" });
 
-  getEliminations: (date?: string) =>
-    req<Elimination[]>(`/api/eliminations${date ? `?date=${date}` : ""}`),
-  createElimination: (e: EliminationInput) =>
-    req<Elimination>("/api/eliminations", { method: "POST", body: JSON.stringify(e) }),
-  updateElimination: (id: string, e: EliminationInput) =>
-    req<Elimination>(`/api/eliminations/${id}`, { method: "PUT", body: JSON.stringify(e) }),
-  deleteElimination: (id: string) => req(`/api/eliminations/${id}`, { method: "DELETE" }),
+// Eliminations
+export const getEliminations = (date?: string) =>
+  request<Elimination[]>(`/api/eliminations${date ? `?date=${date}` : ""}`);
+export const createElimination = (e: EliminationInput) =>
+  request<Elimination>("/api/eliminations", { method: "POST", body: JSON.stringify(e) });
+export const updateElimination = (id: string, e: EliminationInput) =>
+  request<Elimination>(`/api/eliminations/${id}`, { method: "PUT", body: JSON.stringify(e) });
+export const deleteElimination = (id: string) =>
+  request<{ ok: boolean }>(`/api/eliminations/${id}`, { method: "DELETE" });
 
-  getVitamin: (date: string) => req<VitaminDRec>(`/api/vitamin?date=${date}`),
-  setVitamin: (date: string, taken: boolean, time: string | null) =>
-    req<VitaminDRec>(`/api/vitamin?date=${date}`, {
-      method: "PUT",
-      body: JSON.stringify({ taken, time }),
-    }),
+// Supplements
+export const getSupplements = (date?: string) =>
+  request<Supplement[]>(`/api/supplements${date ? `?date=${date}` : ""}`);
+export const createSupplement = (s: { name: string; datetime: string }) =>
+  request<Supplement>("/api/supplements", { method: "POST", body: JSON.stringify(s) });
+export const updateSupplement = (id: string, s: { name: string; datetime: string }) =>
+  request<Supplement>(`/api/supplements/${id}`, { method: "PUT", body: JSON.stringify(s) });
+export const deleteSupplement = (id: string) =>
+  request<{ ok: boolean }>(`/api/supplements/${id}`, { method: "DELETE" });
 
-  getDaily: (date: string) => req<DailySummary>(`/api/daily?date=${date}`),
-};
+// Daily summary
+export const getDaily = (date: string) => request<DailySummary>(`/api/daily?date=${date}`);
+
+// Timeline
+export const getTimeline = (date: string) => request<TimelineData>(`/api/timeline?date=${date}`);
+
+// Stats
+export const getStats = (start: string, end: string) =>
+  request<StatsData>(`/api/stats?start=${start}&end=${end}`);
+
+// Growth
+export const getGrowth = () => request<GrowthData>("/api/growth");
