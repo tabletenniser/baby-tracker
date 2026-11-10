@@ -6,7 +6,9 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ComposedChart,
   Legend,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -22,20 +24,30 @@ type Range = "7" | "14" | "31" | "custom";
 
 function MilkChart({ data }: { data: MilkPoint[] }) {
   const { lang, t } = useLang();
+  const rows = data.map((d) => ({
+    ...d,
+    breastPct: d.total > 0 ? Math.round((d.breast / d.total) * 100) : null,
+  }));
   return (
     <section className="card">
       <h2 className="card-title">{t("insights.milk")}</h2>
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
+          <ComposedChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
+            <YAxis yAxisId="ml" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} width={38} />
+            <Tooltip
+              formatter={(v: any, name: any) =>
+                name === t("insights.breastPct") ? `${v}%` : `${Math.round(Number(v))} ml`
+              }
+            />
             <Legend />
-            <Bar dataKey="breast" stackId="a" fill="#ff7aa2" name={t("insights.breast")} />
-            <Bar dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} />
-          </BarChart>
+            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#ff7aa2" name={t("insights.breast")} />
+            <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} />
+            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#e33b6a" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </section>
