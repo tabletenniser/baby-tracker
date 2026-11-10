@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createElimination, updateElimination } from "../api";
 import { defaultDateTime } from "../dates";
+import { useLang } from "../i18n";
 import type { Elimination, EliminationInput, ElimType, PoopSize } from "../types";
 
 interface Props {
@@ -10,13 +11,8 @@ interface Props {
   onCancel: () => void;
 }
 
-const WATERY_LABELS: Record<number, string> = {
-  1: "Formed",
-  2: "Middle",
-  3: "Watery",
-};
-
 export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
+  const { t } = useLang();
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
   const [type, setType] = useState<ElimType>(initial?.type ?? "pee");
   const [size, setSize] = useState<PoopSize>(initial?.size ?? "M");
@@ -26,7 +22,7 @@ export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
 
   async function submit() {
     if (!datetime) {
-      setError("Please set a time.");
+      setError(t("feeding.needTime"));
       return;
     }
     const input: EliminationInput = { datetime, type };
@@ -50,7 +46,7 @@ export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
   return (
     <div className="elim-form">
       <label className="field">
-        <span>Time</span>
+        <span>{t("elim.time")}</span>
         <input
           type="datetime-local"
           value={datetime}
@@ -64,14 +60,14 @@ export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
           className={type === "pee" ? "active" : ""}
           onClick={() => setType("pee")}
         >
-          💧 Pee
+          💧 {t("elim.pee")}
         </button>
         <button
           type="button"
           className={type === "poop" ? "active" : ""}
           onClick={() => setType("poop")}
         >
-          💩 Poop
+          💩 {t("elim.poop")}
         </button>
       </div>
 
@@ -79,7 +75,7 @@ export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
         <>
           <div className="row-2">
             <label className="field">
-              <span>Size</span>
+              <span>{t("elim.size")}</span>
               <select value={size} onChange={(e) => setSize(e.target.value as PoopSize)}>
                 <option value="S">S</option>
                 <option value="M">M</option>
@@ -87,16 +83,17 @@ export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
               </select>
             </label>
             <label className="field">
-              <span>Watery</span>
+              <span>{t("elim.watery")}</span>
               <select value={watery} onChange={(e) => setWatery(Number(e.target.value))}>
-                <option value={1}>Formed</option>
-                <option value={2}>Middle</option>
-                <option value={3}>Watery</option>
+                <option value={1}>{t("elim.formed")}</option>
+                <option value={2}>{t("elim.middle")}</option>
+                <option value={3}>{t("elim.wateryLevel")}</option>
               </select>
             </label>
           </div>
           <div className="preview">
-            Size <b>{size}</b> · {WATERY_LABELS[watery]}
+            {t("item.size")} <b>{size}</b> · {t("item.watery")}:{" "}
+            {watery === 1 ? t("elim.formed") : watery === 3 ? t("elim.wateryLevel") : t("elim.middle")}
           </div>
         </>
       )}
@@ -104,11 +101,11 @@ export function EliminationForm({ date, initial, onSubmit, onCancel }: Props) {
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
         <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "Saving…" : initial ? "Update" : "Add entry"}
+          {saving ? "…" : initial ? t("elim.edit") : t("elim.add")}
         </button>
         {initial && (
           <button className="btn ghost" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
       </div>

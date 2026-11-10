@@ -8,15 +8,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useLang } from "../i18n";
 import type { GrowthData } from "../types";
 
 export function GrowthChart({ growth }: { growth: GrowthData }) {
+  const { t } = useLang();
   if (!growth.curves || !growth.sex) {
-    return (
-      <div className="empty">
-        Set the baby's sex in the profile (tap the age) to see the WHO growth chart.
-      </div>
-    );
+    return <div className="empty">{t("growth.setSex")}</div>;
   }
 
   const curves = growth.curves;
@@ -32,13 +30,13 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
     <div>
       {growth.latest && (
         <div className="growth-latest">
-          Latest: <b>{growth.latest.weightKg.toFixed(2)} kg</b> · about the{" "}
-          <b>{Math.round(growth.latest.percentile)}th percentile</b>
+          {t("insights.latest")} <b>{growth.latest.weightKg.toFixed(2)} kg</b> ·{" "}
+          {t("insights.percentile", { n: Math.round(growth.latest.percentile) })}
         </div>
       )}
       {measurements.length === 0 && (
         <div className="muted small" style={{ marginBottom: 8 }}>
-          No weight points yet — record a breast feeding with a "before" weight to add one.
+          {t("growth.noPoints")}
         </div>
       )}
       <div className="chart">
@@ -58,7 +56,7 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
               tickFormatter={(v) => `${v}kg`}
             />
             <Tooltip
-              labelFormatter={(x) => `${x} months`}
+              labelFormatter={(x) => `${x} ${t("growth.months")}`}
               formatter={(v: any, name: any) => [
                 `${Number(v).toFixed(2)} kg`,
                 name,
@@ -69,18 +67,18 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
             <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#f0568a" dot={false} strokeWidth={2} isAnimationActive={false} />
             <Line data={toXY(curves.p85)} dataKey="y" name="85th" stroke="#f0c4d8" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#e3d5dc" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Scatter data={measurements} fill="#3a2e39" name="Baby" />
+            <Scatter data={measurements} fill="#3a2e39" name={t("growth.baby")} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
       <div className="growth-legend">
-        <span><i style={{ background: "#f0568a" }} /> 50th</span>
-        <span><i style={{ background: "#f0c4d8" }} /> 15th / 85th</span>
-        <span><i style={{ background: "#e3d5dc" }} /> 3rd / 97th</span>
-        <span><i style={{ background: "#3a2e39" }} /> ● Baby</span>
+        <span><i style={{ background: "#f0568a" }} /> {t("growth.p50")}</span>
+        <span><i style={{ background: "#f0c4d8" }} /> {t("growth.p1585")}</span>
+        <span><i style={{ background: "#e3d5dc" }} /> {t("growth.p397")}</span>
+        <span><i style={{ background: "#3a2e39" }} /> ● {t("growth.baby")}</span>
       </div>
       <div className="muted small" style={{ marginTop: 8 }}>
-        WHO weight-for-age reference. Weight = the "before" weight from each breast feeding.
+        {t("growth.note")}
       </div>
     </div>
   );

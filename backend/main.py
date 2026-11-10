@@ -15,6 +15,7 @@ import store
 from models import (
     Baby,
     DailySummary,
+    DayCutoffSet,
     EliminationCreate,
     FeedingCreate,
     SleepCreate,
@@ -76,9 +77,19 @@ def date_of(iso: str) -> str:
     return iso[:10]
 
 
-def day_bounds(date: str):
-    start = datetime.fromisoformat(date + "T00:00:00")
+def day_bounds(date: str, cutoff: str = "00:00"):
+    h, m = (int(x) for x in cutoff.split(":"))
+    start = datetime.fromisoformat(date + "T00:00:00") + timedelta(hours=h, minutes=m)
     return start, start + timedelta(days=1)
+
+
+def cutoff_for(date: str, data: dict) -> str:
+    """The day-start cutoff for `date`: per-day override, else the global default."""
+    return (
+        data.get("dayCutoffOverrides", {}).get(date)
+        or data["baby"].get("dayCutoff")
+        or "00:00"
+    )
 
 
 def date_range(start: str, end: str):
@@ -152,14 +163,16 @@ def sleep_view(s):
     return {**s, "start": start, "end": end, "hours": round(hours, 2)}
 
 
-def sleep_overlap_hours(s, date: str) -> float:
-    """Hours of sleep `s` (a sleep_view dict) that fall within calendar day `date`.
+def sleep_overlap_hours(s, date: str, data: dict) -> float:
+    """Hours of sleep `s` (a sleep_view dict) that fall within day `date`.
 
-    This correctly splits sleep that spans midnight across the two days.
+    A "day" runs from the configured cutoff to the next day's cutoff, so a
+    night sleep is attributed to the day it started (e.g. a 3am cutoff keeps a
+    22:00→03:00 sleep entirely on the first day).
     """
     st = datetime.fromisoformat(s["start"])
     en = datetime.fromisoformat(s["end"])
-    dstart, dend = day_bounds(date)
+    dstart, dend = day_bounds(date, cutoff_for(date, data))
     ov_start = max(st, dstart)
     ov_end = min(en, dend)
     if ov_end > ov_start:
@@ -185,7 +198,7 @@ def daily_summary(date: str, data: Optional[dict] = None) -> dict:
             formula += feeding_formula(f)
     sleep_hours = 0.0
     for s in data["sleeps"]:
-        sleep_hours += sleep_overlap_hours(sleep_view(s), date)
+        sleep_hours += sleep_overlap_hours(sleep_view(s), date, data)
     pee = sum(1 for e in data["eliminations"] if e["type"] == "pee" and date_of(e["datetime"]) == date)
     poop = sum(1 for e in data["eliminations"] if e["type"] == "poop" and date_of(e["datetime"]) == date)
     supps = sorted({s["name"] for s in data["supplements"] if date_of(s["datetime"]) == date})
@@ -263,8 +276,40 @@ def get_baby():
 
 @app.put("/api/baby")
 def set_baby(baby: Baby):
-    store.write(lambda d: d.update({"baby": {"birthday": baby.birthday, "sex": baby.sex}}))
+    store.write(lambda d: d.update({"baby": {
+        "birthday": baby.birthday,
+        "sex": baby.sex,
+        "name": baby.name,
+        "dayCutoff": baby.dayCutoff or "00:00",
+    }}))
     return store.read()["baby"]
+
+
+# --------------------------------------------------------------------------- #
+# Day cutoff (when the "day" starts, for sleep attribution)
+# --------------------------------------------------------------------------- #
+@app.get("/api/day-cutoff")
+def get_day_cutoff():
+    data = store.read()
+    return {
+        "global": data["baby"].get("dayCutoff") or "00:00",
+        "overrides": data.get("dayCutoffOverrides", {}),
+    }
+
+
+@app.put("/api/day-cutoff")
+def set_day_cutoff(body: DayCutoffSet):
+    def mut(data):
+        if body.globalCutoff is not None:
+            data["baby"]["dayCutoff"] = body.globalCutoff
+        if body.date is not None:
+            if body.cutoff:
+                data["dayCutoffOverrides"][body.date] = body.cutoff
+            else:
+                data["dayCutoffOverrides"].pop(body.date, None)
+
+    store.write(mut)
+    return get_day_cutoff()
 
 
 # --------------------------------------------------------------------------- #
@@ -326,9 +371,10 @@ def delete_feeding(fid: str):
 # --------------------------------------------------------------------------- #
 @app.get("/api/sleeps")
 def list_sleeps(date: Optional[str] = None):
-    views = [sleep_view(s) for s in store.read()["sleeps"]]
+    data = store.read()
+    views = [sleep_view(s) for s in data["sleeps"]]
     if date:
-        views = [v for v in views if sleep_overlap_hours(v, date) > 0]
+        views = [v for v in views if sleep_overlap_hours(v, date, data) > 0]
     views = sorted(views, key=lambda v: v["start"])
     return views
 
@@ -515,7 +561,8 @@ def daily(date: str):
 @app.get("/api/timeline")
 def timeline(date: str):
     data = store.read()
-    dstart, _ = day_bounds(date)
+    cutoff = cutoff_for(date, data)
+    dstart, _ = day_bounds(date, cutoff)
 
     feedings = [feeding_view(f) for f in data["feedings"] if date_of(f["datetime"]) == date]
     eliminations = [e for e in data["eliminations"] if date_of(e["datetime"]) == date]
@@ -524,7 +571,7 @@ def timeline(date: str):
     sleeps = []
     for s in data["sleeps"]:
         v = sleep_view(s)
-        ov = sleep_overlap_hours(v, date)
+        ov = sleep_overlap_hours(v, date, data)
         if ov > 0:
             st = datetime.fromisoformat(v["start"])
             sleeps.append({**v, "overnight": st < dstart, "dayHours": round(ov, 2)})
@@ -536,6 +583,7 @@ def timeline(date: str):
         "eliminations": sorted(eliminations, key=lambda e: e["datetime"]),
         "supplements": sorted(supplements, key=lambda s: s["datetime"]),
         "daily": daily_summary(date, data),
+        "cutoff": cutoff,
     }
 
 

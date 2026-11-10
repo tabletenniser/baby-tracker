@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createSleep, updateSleep } from "../api";
 import { formatHours, toLocalDateTime, defaultDateTime } from "../dates";
+import { useLang } from "../i18n";
 import type { Sleep, SleepInput, SleepMode } from "../types";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
+  const { lang, t } = useLang();
   const [mode, setMode] = useState<SleepMode>(initial?.mode ?? "start_end");
   const [startTime, setStartTime] = useState(() => {
     if (initial?.startTime) return initial.startTime;
@@ -38,7 +40,7 @@ export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
     if (mode === "start_end") input.startTime = startTime;
     else input.durationHours = parseFloat(durationHours) || 0;
     if (mode === "start_end" && !startTime) {
-      setError("Please set a start time.");
+      setError(t("sleep.needStart"));
       return;
     }
     setSaving(true);
@@ -62,21 +64,21 @@ export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
           className={mode === "start_end" ? "active" : ""}
           onClick={() => setMode("start_end")}
         >
-          Start + End
+          {t("sleep.startEnd")}
         </button>
         <button
           type="button"
           className={mode === "duration_end" ? "active" : ""}
           onClick={() => setMode("duration_end")}
         >
-          Duration + End
+          {t("sleep.durationEnd")}
         </button>
       </div>
 
       {mode === "start_end" ? (
         <div className="row-2">
           <label className="field">
-            <span>Start</span>
+            <span>{t("sleep.start")}</span>
             <input
               type="datetime-local"
               value={startTime}
@@ -84,7 +86,7 @@ export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
             />
           </label>
           <label className="field">
-            <span>End</span>
+            <span>{t("sleep.end")}</span>
             <input
               type="datetime-local"
               value={endTime}
@@ -95,7 +97,7 @@ export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
       ) : (
         <div className="row-2">
           <label className="field">
-            <span>Duration (h)</span>
+            <span>{t("sleep.duration")}</span>
             <input
               type="number"
               step="0.25"
@@ -105,7 +107,7 @@ export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
             />
           </label>
           <label className="field">
-            <span>End</span>
+            <span>{t("sleep.end")}</span>
             <input
               type="datetime-local"
               value={endTime}
@@ -116,17 +118,17 @@ export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
       )}
 
       <div className="preview">
-        Sleep <b>{formatHours(previewHours)}</b>
+        {t("sleep.preview", { h: formatHours(previewHours, lang) })}
       </div>
 
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
         <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "Saving…" : initial ? "Update sleep" : "Add sleep"}
+          {saving ? "…" : initial ? t("sleep.edit") : t("sleep.add")}
         </button>
         {initial && (
           <button className="btn ghost" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
       </div>

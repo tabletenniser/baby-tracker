@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { setBaby } from "../api";
+import { setBaby, setDayCutoff as saveDayCutoff } from "../api";
 import { todayStr } from "../dates";
+import { useLang } from "../i18n";
 import type { Baby, Sex } from "../types";
 import { Modal } from "./Modal";
 
@@ -11,21 +12,30 @@ interface Props {
 }
 
 export function ProfileModal({ baby, onClose, onSaved }: Props) {
+  const { t } = useLang();
+  const [name, setName] = useState(baby.name ?? "");
   const [birthday, setBirthday] = useState(baby.birthday ?? "");
   const [sex, setSex] = useState<Sex | null>(baby.sex ?? null);
+  const [dayCutoff, setDayCutoff] = useState(baby.dayCutoff ?? "00:00");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function submit() {
     if (!birthday) {
-      setError("Please pick a birthday.");
+      setError(t("setup.needBirthday"));
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      const b = await setBaby({ birthday, sex });
-      onSaved(b);
+      const b = await setBaby({
+        birthday,
+        sex,
+        name: name.trim() || null,
+        dayCutoff,
+      });
+      await saveDayCutoff({ globalCutoff: dayCutoff });
+      onSaved({ ...b, dayCutoff });
     } catch (e) {
       setError(String(e));
     } finally {
@@ -34,9 +44,18 @@ export function ProfileModal({ baby, onClose, onSaved }: Props) {
   }
 
   return (
-    <Modal title="Baby profile" onClose={onClose}>
+    <Modal title={t("profile.title")} onClose={onClose}>
       <label className="field">
-        <span>Birthday</span>
+        <span>{t("profile.name")}</span>
+        <input
+          type="text"
+          value={name}
+          placeholder="…"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </label>
+      <label className="field">
+        <span>{t("profile.birthday")}</span>
         <input
           type="date"
           value={birthday}
@@ -45,31 +64,40 @@ export function ProfileModal({ baby, onClose, onSaved }: Props) {
         />
       </label>
       <div className="field">
-        <span>Sex</span>
+        <span>{t("profile.sex")}</span>
         <div className="segmented">
           <button
             type="button"
             className={sex === "female" ? "active" : ""}
             onClick={() => setSex("female")}
           >
-            ♀ Girl
+            {t("profile.girl")}
           </button>
           <button
             type="button"
             className={sex === "male" ? "active" : ""}
             onClick={() => setSex("male")}
           >
-            ♂ Boy
+            {t("profile.boy")}
           </button>
         </div>
       </div>
+      <label className="field">
+        <span>{t("profile.dayStarts")}</span>
+        <input
+          type="time"
+          value={dayCutoff}
+          onChange={(e) => setDayCutoff(e.target.value || "00:00")}
+        />
+        <small className="hint">{t("profile.dayStartsHint")}</small>
+      </label>
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
         <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "Saving…" : "Save"}
+          {saving ? "…" : t("common.save")}
         </button>
         <button className="btn ghost" onClick={onClose}>
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </Modal>

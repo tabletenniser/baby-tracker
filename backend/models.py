@@ -18,6 +18,14 @@ Sex = Literal["male", "female"]
 class Baby(BaseModel):
     birthday: Optional[str] = None  # YYYY-MM-DD
     sex: Optional[Sex] = None  # for the growth chart
+    name: Optional[str] = None  # shown in the top bar
+    dayCutoff: Optional[str] = "00:00"  # HH:MM — when the "day" starts (sleep attribution)
+
+
+class DayCutoffSet(BaseModel):
+    globalCutoff: Optional[str] = None  # HH:MM, sets the default for every day
+    date: Optional[str] = None  # YYYY-MM-DD, a specific day to override/clear
+    cutoff: Optional[str] = None  # HH:MM, the override time (None clears the override)
 
 
 class WeightEntry(BaseModel):

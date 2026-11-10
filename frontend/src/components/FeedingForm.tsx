@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFeeding, updateFeeding } from "../api";
 import { defaultDateTime } from "../dates";
+import { useLang } from "../i18n";
 import type { Feeding, FeedingInput, FeedingType, Side } from "../types";
 
 interface WeightRow {
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
+  const { t } = useLang();
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
   const [type, setType] = useState<FeedingType>(initial?.type ?? "breast");
   const [weights, setWeights] = useState<WeightRow[]>(() => {
@@ -84,7 +86,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
 
   async function submit() {
     if (!datetime) {
-      setError("Please set a time.");
+      setError(t("feeding.needTime"));
       return;
     }
     const input: FeedingInput = { datetime, type };
@@ -93,7 +95,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
         (r) => r.weight.trim() !== "" && !isNaN(parseFloat(r.weight))
       );
       if (valid.length < 2) {
-        setError("Add at least two weights to calculate the amount fed.");
+        setError(t("feeding.needWeights"));
         return;
       }
       input.weights = valid.map((r, i) => ({
@@ -120,7 +122,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
   return (
     <div className="feed-form">
       <label className="field">
-        <span>Time</span>
+        <span>{t("feeding.time")}</span>
         <input
           type="datetime-local"
           value={datetime}
@@ -134,22 +136,22 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
           className={type === "breast" ? "active" : ""}
           onClick={() => setType("breast")}
         >
-          🤱 Breast
+          🤱 {t("feeding.breast")}
         </button>
         <button
           type="button"
           className={type === "bottle" ? "active" : ""}
           onClick={() => setType("bottle")}
         >
-          🍼 Bottle
+          🍼 {t("feeding.bottle")}
         </button>
       </div>
 
       {type === "breast" ? (
         <div className="weights">
           <div className="weights-head">
-            <span>Weight (g)</span>
-            <span>Side</span>
+            <span>{t("feeding.weight")}</span>
+            <span>{t("feeding.side")}</span>
             <span />
           </div>
           {weights.map((w, i) => (
@@ -157,20 +159,20 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
               <input
                 type="number"
                 inputMode="numeric"
-                placeholder={i === 0 ? "before" : "after"}
+                placeholder={i === 0 ? t("feeding.before") : t("feeding.after")}
                 value={w.weight}
                 onChange={(e) => setWeight(i, { weight: e.target.value })}
               />
               {i === 0 ? (
-                <span className="side-na">start</span>
+                <span className="side-na">{t("feeding.before")}</span>
               ) : (
                 <select
                   value={w.side}
                   onChange={(e) => setWeight(i, { side: e.target.value as Side })}
                 >
-                  <option value="left">Left</option>
-                  <option value="right">Right</option>
-                  <option value="na">N/A</option>
+                  <option value="left">{t("feeding.left")}</option>
+                  <option value="right">{t("feeding.right")}</option>
+                  <option value="na">{t("feeding.na")}</option>
                 </select>
               )}
               <button
@@ -178,24 +180,27 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
                 className="btn icon danger"
                 onClick={() => removeWeight(i)}
                 disabled={weights.length <= 1}
-                aria-label="Remove weight"
+                aria-label={t("common.remove")}
               >
                 ✕
               </button>
             </div>
           ))}
           <button type="button" className="btn ghost" onClick={addWeight}>
-            + Add weight
+            {t("feeding.addWeight")}
           </button>
           <div className="preview">
-            Left <b>{Math.round(preview.left)} ml</b> · Right <b>{Math.round(preview.right)} ml</b> ·{" "}
-            <span className="total">Total {Math.round(preview.total)} ml</span>
+            {t("feeding.left")} <b>{Math.round(preview.left)} ml</b> ·{" "}
+            {t("feeding.right")} <b>{Math.round(preview.right)} ml</b> ·{" "}
+            <span className="total">
+              {t("item.total")} {Math.round(preview.total)} ml
+            </span>
           </div>
         </div>
       ) : (
         <div className="bottle">
           <label className="field">
-            <span>Formula milk (ml)</span>
+            <span>{t("feeding.formulaMl")}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -205,7 +210,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
             />
           </label>
           <label className="field">
-            <span>Breast milk (ml)</span>
+            <span>{t("feeding.breastMl")}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -215,7 +220,8 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
             />
           </label>
           <div className="preview">
-            Formula <b>{Math.round(preview.formula)} ml</b> · Breast <b>{Math.round(preview.total)} ml</b>
+            {t("item.formula")} <b>{Math.round(preview.formula)} ml</b> ·{" "}
+            {t("item.breastMl")} <b>{Math.round(preview.total)} ml</b>
           </div>
         </div>
       )}
@@ -223,11 +229,11 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
         <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "Saving…" : initial ? "Update feeding" : "Add feeding"}
+          {saving ? "…" : initial ? t("feeding.edit") : t("feeding.add")}
         </button>
         {initial && (
           <button className="btn ghost" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
       </div>

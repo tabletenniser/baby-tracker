@@ -7,6 +7,7 @@ import {
   getTimeline,
 } from "../api";
 import { formatHours, formatMl, shortDate, timeOf, todayStr } from "../dates";
+import { supplementLabel, useLang } from "../i18n";
 import type {
   Elimination,
   Feeding,
@@ -15,14 +16,17 @@ import type {
   TimelineData,
 } from "../types";
 import { DailySummaryCard } from "./DailySummary";
+import { DayCutoffControl } from "./DayCutoffControl";
 import { EliminationForm } from "./EliminationForm";
 import { FeedingForm } from "./FeedingForm";
+import { FeedingTrend } from "./FeedingTrend";
 import { Modal } from "./Modal";
 import { SleepForm } from "./SleepForm";
 import { SupplementForm } from "./SupplementForm";
 
 type Kind = "feeding" | "sleep" | "elimination" | "supplement";
 type ModalKind = Kind | null;
+type T = (key: string, vars?: Record<string, string | number>) => string;
 
 interface Item {
   key: string;
@@ -36,23 +40,23 @@ interface Item {
   id: string;
 }
 
-const WATERY: Record<number, string> = { 1: "Formed", 2: "Middle", 3: "Watery" };
-
-function buildItems(data: TimelineData): Item[] {
+function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
   const items: Item[] = [];
   for (const f of data.feedings) {
     const detail =
       f.type === "breast"
-        ? `Total ${formatMl(f.breastMl)}${f.leftMl > 0 ? ` · L ${formatMl(f.leftMl)}` : ""}${
-            f.rightMl > 0 ? ` · R ${formatMl(f.rightMl)}` : ""
-          }`
-        : `Formula ${formatMl(f.formulaMl)}${f.breastMl > 0 ? ` · Breast ${formatMl(f.breastMl)}` : ""}`;
+        ? `${t("item.total")} ${formatMl(f.breastMl, lang)}${
+            f.leftMl > 0 ? ` · ${t("item.left")} ${formatMl(f.leftMl, lang)}` : ""
+          }${f.rightMl > 0 ? ` · ${t("item.right")} ${formatMl(f.rightMl, lang)}` : ""}`
+        : `${t("item.formula")} ${formatMl(f.formulaMl, lang)}${
+            f.breastMl > 0 ? ` · ${t("item.breastMl")} ${formatMl(f.breastMl, lang)}` : ""
+          }`;
     items.push({
       key: `f-${f.id}`,
       sortTime: f.datetime,
       displayTime: timeOf(f.datetime),
       icon: f.type === "breast" ? "🤱" : "🍼",
-      title: f.type === "breast" ? "Breast" : "Bottle",
+      title: f.type === "breast" ? t("item.breast") : t("item.bottle"),
       detail,
       kind: "feeding",
       id: f.id,
@@ -65,23 +69,27 @@ function buildItems(data: TimelineData): Item[] {
       sortTime: overnight ? s.end : s.start,
       displayTime: timeOf(overnight ? s.end : s.start),
       icon: "😴",
-      title: overnight ? "Slept until" : "Sleep",
+      title: overnight ? t("item.sleptUntil") : t("item.sleep"),
       detail: overnight
-        ? `${formatHours(s.dayHours ?? s.hours)} · from ${timeOf(s.start)} prev night`
-        : `${formatHours(s.hours)} · ${timeOf(s.start)} → ${timeOf(s.end)}`,
+        ? `${formatHours(s.dayHours ?? s.hours, lang)} · ${t("item.fromPrevNight", {
+            t: timeOf(s.start),
+          })}`
+        : `${formatHours(s.hours, lang)} · ${timeOf(s.start)} → ${timeOf(s.end)}`,
       overnight,
       kind: "sleep",
       id: s.id,
     });
   }
   for (const e of data.eliminations) {
+    const wateryLabel =
+      e.watery === 1 ? t("elim.formed") : e.watery === 3 ? t("elim.wateryLevel") : t("elim.middle");
     items.push({
       key: `e-${e.id}`,
       sortTime: e.datetime,
       displayTime: timeOf(e.datetime),
       icon: e.type === "pee" ? "💧" : "💩",
-      title: e.type === "pee" ? "Pee" : "Poop",
-      detail: e.type === "poop" ? `Size ${e.size} · ${WATERY[e.watery ?? 2]}` : undefined,
+      title: e.type === "pee" ? t("item.pee") : t("item.poop"),
+      detail: e.type === "poop" ? `${t("item.size")} ${e.size} · ${t("item.watery")}: ${wateryLabel}` : undefined,
       kind: "elimination",
       id: e.id,
     });
@@ -92,7 +100,7 @@ function buildItems(data: TimelineData): Item[] {
       sortTime: s.datetime,
       displayTime: timeOf(s.datetime),
       icon: "💊",
-      title: s.name,
+      title: supplementLabel(s.name, t),
       kind: "supplement",
       id: s.id,
     });
@@ -103,9 +111,11 @@ function buildItems(data: TimelineData): Item[] {
 
 interface Props {
   date: string;
+  refreshSignal?: number;
 }
 
-export function TimelineView({ date }: Props) {
+export function TimelineView({ date, refreshSignal }: Props) {
+  const { lang, t } = useLang();
   const [data, setData] = useState<TimelineData | null>(null);
   const [modal, setModal] = useState<ModalKind>(null);
   const [editFeeding, setEditFeeding] = useState<Feeding | null>(null);
@@ -141,7 +151,7 @@ export function TimelineView({ date }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [date]);
+  }, [date, refreshSignal]);
 
   function openAdd(kind: Kind) {
     setEditFeeding(null);
@@ -170,7 +180,7 @@ export function TimelineView({ date }: Props) {
   }
 
   async function handleDelete(item: Item) {
-    if (!confirm("Delete this entry?")) return;
+    if (!confirm(t("common.confirmDelete"))) return;
     try {
       if (item.kind === "feeding") await deleteFeeding(item.id);
       else if (item.kind === "sleep") await deleteSleep(item.id);
@@ -182,7 +192,7 @@ export function TimelineView({ date }: Props) {
     }
   }
 
-  const items = data ? buildItems(data) : [];
+  const items = data ? buildItems(data, t, lang) : [];
 
   return (
     <>
@@ -190,27 +200,30 @@ export function TimelineView({ date }: Props) {
 
       <div className="add-bar">
         <button className="btn add-btn" onClick={() => openAdd("feeding")}>
-          🤱 Feeding
+          {t("add.feeding")}
         </button>
         <button className="btn add-btn" onClick={() => openAdd("sleep")}>
-          😴 Sleep
+          {t("add.sleep")}
         </button>
         <button className="btn add-btn" onClick={() => openAdd("elimination")}>
-          💧 Pee/Poop
+          {t("add.elim")}
         </button>
         <button className="btn add-btn" onClick={() => openAdd("supplement")}>
-          💊 Supplement
+          {t("add.supplement")}
         </button>
       </div>
 
       <section className="card">
-        <h2 className="card-title">
-          {date === todayStr() ? "Today" : shortDate(date)}
-        </h2>
-        <div className="timeline">
-          {items.length === 0 && (
-            <div className="empty">Nothing logged yet. Add an activity above.</div>
+        <div className="timeline-head">
+          <h2 className="card-title">
+            {date === todayStr() ? t("timeline.today") : shortDate(date, lang)}
+          </h2>
+          {data && (
+            <DayCutoffControl date={date} currentCutoff={data.cutoff} onChanged={refresh} />
           )}
+        </div>
+        <div className="timeline">
+          {items.length === 0 && <div className="empty">{t("item.noActivity")}</div>}
           {items.map((it) => (
             <div className={`timeline-item ${it.overnight ? "overnight" : ""}`} key={it.key}>
               <div className="timeline-time">{it.displayTime}</div>
@@ -221,7 +234,7 @@ export function TimelineView({ date }: Props) {
               </div>
               <div className="list-actions">
                 <button className="btn ghost sm" onClick={() => openEdit(it)}>
-                  Edit
+                  {t("item.edit")}
                 </button>
                 <button className="btn ghost sm danger" onClick={() => handleDelete(it)}>
                   ✕
@@ -232,8 +245,10 @@ export function TimelineView({ date }: Props) {
         </div>
       </section>
 
+      <FeedingTrend />
+
       {modal === "feeding" && (
-        <Modal title={editFeeding ? "Edit feeding" : "Add feeding"} onClose={closeModal}>
+        <Modal title={editFeeding ? t("feeding.edit") : t("feeding.add")} onClose={closeModal}>
           <FeedingForm
             key={editFeeding?.id ?? "new"}
             date={date}
@@ -247,7 +262,7 @@ export function TimelineView({ date }: Props) {
         </Modal>
       )}
       {modal === "sleep" && (
-        <Modal title={editSleep ? "Edit sleep" : "Add sleep"} onClose={closeModal}>
+        <Modal title={editSleep ? t("sleep.edit") : t("sleep.add")} onClose={closeModal}>
           <SleepForm
             key={editSleep?.id ?? "new"}
             date={date}
@@ -261,7 +276,7 @@ export function TimelineView({ date }: Props) {
         </Modal>
       )}
       {modal === "elimination" && (
-        <Modal title={editElim ? "Edit entry" : "Add pee / poop"} onClose={closeModal}>
+        <Modal title={editElim ? t("elim.edit") : t("elim.add")} onClose={closeModal}>
           <EliminationForm
             key={editElim?.id ?? "new"}
             date={date}
@@ -275,7 +290,7 @@ export function TimelineView({ date }: Props) {
         </Modal>
       )}
       {modal === "supplement" && (
-        <Modal title={editSupp ? "Edit supplement" : "Add supplement"} onClose={closeModal}>
+        <Modal title={editSupp ? t("supp.edit") : t("supp.add")} onClose={closeModal}>
           <SupplementForm
             key={editSupp?.id ?? "new"}
             date={date}

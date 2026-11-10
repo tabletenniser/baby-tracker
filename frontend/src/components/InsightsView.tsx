@@ -13,25 +13,27 @@ import {
 } from "recharts";
 import { getGrowth, getStats } from "../api";
 import { addDays, formatHours, hourToTime, prettyDate, todayStr } from "../dates";
+import { useLang } from "../i18n";
 import type { CountPoint, GrowthData, HourPoint, MilkPoint, StatsData } from "../types";
 import { GrowthChart } from "./GrowthChart";
 
 type Range = "7" | "14" | "31" | "custom";
 
 function MilkChart({ data }: { data: MilkPoint[] }) {
+  const { lang, t } = useLang();
   return (
     <section className="card">
-      <h2 className="card-title">🥛 Milk per day</h2>
+      <h2 className="card-title">{t("insights.milk")}</h2>
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
-            <XAxis dataKey="date" tickFormatter={prettyDate} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
             <Legend />
-            <Bar dataKey="breast" stackId="a" fill="#ff7aa2" name="Breast" />
-            <Bar dataKey="formula" stackId="a" fill="#6aa9ff" name="Formula" />
+            <Bar dataKey="breast" stackId="a" fill="#ff7aa2" name={t("insights.breast")} />
+            <Bar dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -40,9 +42,10 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
 }
 
 function SleepChart({ data }: { data: HourPoint[] }) {
+  const { lang, t } = useLang();
   return (
     <section className="card">
-      <h2 className="card-title">😴 Sleep per day</h2>
+      <h2 className="card-title">{t("insights.sleep")}</h2>
       <div className="chart">
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
@@ -53,10 +56,10 @@ function SleepChart({ data }: { data: HourPoint[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
-            <XAxis dataKey="date" tickFormatter={prettyDate} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: any) => formatHours(Number(v))} />
-            <Area type="monotone" dataKey="hours" stroke="#6aa9ff" fill="url(#sleepGrad)" name="Sleep" />
+            <Tooltip formatter={(v: any) => formatHours(Number(v), lang)} />
+            <Area type="monotone" dataKey="hours" stroke="#6aa9ff" fill="url(#sleepGrad)" name={t("insights.sleep")} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -65,17 +68,18 @@ function SleepChart({ data }: { data: HourPoint[] }) {
 }
 
 function PoopChart({ data }: { data: CountPoint[] }) {
+  const { lang, t } = useLang();
   return (
     <section className="card">
-      <h2 className="card-title">💩 Poop per day</h2>
+      <h2 className="card-title">{t("insights.poop")}</h2>
       <div className="chart">
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
-            <XAxis dataKey="date" tickFormatter={prettyDate} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="count" fill="#c9a227" name="Poop" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill="#c9a227" name={t("insights.poop")} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -84,6 +88,7 @@ function PoopChart({ data }: { data: CountPoint[] }) {
 }
 
 export function InsightsView() {
+  const { t } = useLang();
   const today = todayStr();
   const [range, setRange] = useState<Range>("14");
   const [customStart, setCustomStart] = useState(addDays(today, -13));
@@ -113,21 +118,28 @@ export function InsightsView() {
     getGrowth().then(setGrowth).catch(console.error);
   }, []);
 
+  const rangeLabel: Record<Range, string> = {
+    "7": t("insights.d7"),
+    "14": t("insights.d14"),
+    "31": t("insights.d31"),
+    custom: t("insights.custom"),
+  };
+
   return (
     <div className="insights">
       <section className="card">
-        <h2 className="card-title">Range</h2>
+        <h2 className="card-title">{t("insights.range")}</h2>
         <div className="range-tabs">
           {(["7", "14", "31", "custom"] as const).map((r) => (
             <button key={r} className={range === r ? "active" : ""} onClick={() => setRange(r)}>
-              {r === "custom" ? "Custom" : `${r} days`}
+              {rangeLabel[r]}
             </button>
           ))}
         </div>
         {range === "custom" && (
           <div className="row-2">
             <label className="field">
-              <span>From</span>
+              <span>{t("insights.from")}</span>
               <input
                 type="date"
                 value={customStart}
@@ -136,7 +148,7 @@ export function InsightsView() {
               />
             </label>
             <label className="field">
-              <span>To</span>
+              <span>{t("insights.to")}</span>
               <input
                 type="date"
                 value={customEnd}
@@ -155,28 +167,28 @@ export function InsightsView() {
           <SleepChart data={stats.sleep} />
           <PoopChart data={stats.poop} />
           <section className="card">
-            <h2 className="card-title">🌙 Nighttime sleep</h2>
+            <h2 className="card-title">{t("insights.bedtime")}</h2>
             {stats.bedtime.count > 0 && stats.bedtime.avgStartHour != null ? (
               <div className="bedtime-value">
-                Usually falls asleep around <b>{hourToTime(stats.bedtime.avgStartHour)}</b>
+                {t("insights.bedtimeText", { t: hourToTime(stats.bedtime.avgStartHour) })}
                 <span className="muted small">
                   {" "}
-                  (avg of {stats.bedtime.count} night sleep{stats.bedtime.count > 1 ? "s" : ""})
+                  {t("insights.bedtimeCount", { n: stats.bedtime.count })}
                 </span>
               </div>
             ) : (
-              <div className="empty">No nighttime sleep in this range yet.</div>
+              <div className="empty">{t("insights.noBedtime")}</div>
             )}
           </section>
         </>
       )}
 
       <section className="card">
-        <h2 className="card-title">📈 Growth</h2>
+        <h2 className="card-title">{t("insights.growth")}</h2>
         {growth ? (
           <GrowthChart growth={growth} />
         ) : (
-          <div className="empty">Loading…</div>
+          <div className="empty">{t("app.loading")}</div>
         )}
       </section>
     </div>

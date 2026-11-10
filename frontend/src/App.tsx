@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getBaby } from "./api";
 import { addDays, ageLabel, todayStr } from "./dates";
+import { useLang } from "./i18n";
 import type { Baby } from "./types";
 import { InsightsView } from "./components/InsightsView";
 import { ProfileModal } from "./components/ProfileModal";
@@ -10,11 +11,13 @@ import { TimelineView } from "./components/TimelineView";
 type Tab = "timeline" | "insights";
 
 export default function App() {
+  const { lang, setLang, t } = useLang();
   const [baby, setBaby] = useState<Baby | null>(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(todayStr());
   const [tab, setTab] = useState<Tab>("timeline");
   const [showProfile, setShowProfile] = useState(false);
+  const [refreshSignal, setRefreshSignal] = useState(0);
 
   useEffect(() => {
     getBaby()
@@ -23,7 +26,7 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">Loading…</div>;
+  if (loading) return <div className="loading">{t("app.loading")}</div>;
   if (!baby || !baby.birthday) {
     return (
       <SetupScreen
@@ -37,6 +40,7 @@ export default function App() {
   }
 
   const sexBadge = baby.sex === "female" ? "♀" : baby.sex === "male" ? "♂" : "";
+  const name = baby.name?.trim() || t("app.title");
 
   return (
     <div className="app">
@@ -44,9 +48,9 @@ export default function App() {
         <div className="topbar-left">
           <span className="topbar-emoji">🍼</span>
           <div>
-            <h1>Baby Tracker</h1>
+            <h1>{name}</h1>
             <button className="age-link" onClick={() => setShowProfile(true)}>
-              {ageLabel(baby.birthday)}
+              {ageLabel(baby.birthday, lang)}
               {sexBadge ? ` · ${sexBadge}` : ""}
             </button>
           </div>
@@ -55,7 +59,7 @@ export default function App() {
           <button
             className="btn icon"
             onClick={() => setDate(addDays(date, -1))}
-            aria-label="Previous day"
+            aria-label={t("nav.prev")}
           >
             ‹
           </button>
@@ -69,11 +73,18 @@ export default function App() {
           <button
             className="btn icon"
             onClick={() => setDate(addDays(date, 1))}
-            aria-label="Next day"
+            aria-label={t("nav.next")}
           >
             ›
           </button>
         </div>
+        <button
+          className="lang-toggle"
+          onClick={() => setLang(lang === "en" ? "zh" : "en")}
+          aria-label="language"
+        >
+          {lang === "en" ? "中文" : "EN"}
+        </button>
       </header>
 
       <nav className="tabs">
@@ -81,19 +92,19 @@ export default function App() {
           className={tab === "timeline" ? "active" : ""}
           onClick={() => setTab("timeline")}
         >
-          📅 Timeline
+          {t("tab.timeline")}
         </button>
         <button
           className={tab === "insights" ? "active" : ""}
           onClick={() => setTab("insights")}
         >
-          📊 Insights
+          {t("tab.insights")}
         </button>
       </nav>
 
       <main className="content">
         {tab === "timeline" ? (
-          <TimelineView date={date} />
+          <TimelineView date={date} refreshSignal={refreshSignal} />
         ) : (
           <InsightsView />
         )}
@@ -106,6 +117,7 @@ export default function App() {
           onSaved={(b) => {
             setBaby(b);
             setShowProfile(false);
+            setRefreshSignal((s) => s + 1);
           }}
         />
       )}

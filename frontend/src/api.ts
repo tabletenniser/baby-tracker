@@ -1,6 +1,7 @@
 import type {
   Baby,
   DailySummary,
+  DayCutoffData,
   Elimination,
   EliminationInput,
   Feeding,
@@ -29,6 +30,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const getBaby = () => request<Baby>("/api/baby");
 export const setBaby = (baby: Baby) =>
   request<Baby>("/api/baby", { method: "PUT", body: JSON.stringify(baby) });
+
+// Day cutoff
+export const getDayCutoff = () => request<DayCutoffData>("/api/day-cutoff");
+export const setDayCutoff = (body: {
+  globalCutoff?: string;
+  date?: string;
+  cutoff?: string;
+}) =>
+  request<DayCutoffData>("/api/day-cutoff", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
 
 // Feedings
 export const getFeedings = (date?: string) =>

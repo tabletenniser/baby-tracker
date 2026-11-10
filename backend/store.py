@@ -18,12 +18,13 @@ DATA_FILE = Path(
 _lock = threading.Lock()
 
 DEFAULT: Dict[str, Any] = {
-    "baby": {"birthday": None, "sex": None},
+    "baby": {"birthday": None, "sex": None, "name": None, "dayCutoff": "00:00"},
     "feedings": [],
     "sleeps": [],
     "eliminations": [],
     "supplements": [],
     "vitaminD": {},  # kept for back-compat
+    "dayCutoffOverrides": {},  # {"YYYY-MM-DD": "HH:MM"}
 }
 
 

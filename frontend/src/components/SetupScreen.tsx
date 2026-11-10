@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { setBaby } from "../api";
 import { todayStr } from "../dates";
+import { useLang } from "../i18n";
 import type { Sex } from "../types";
 
 export function SetupScreen({ onDone }: { onDone: () => void }) {
+  const { t } = useLang();
+  const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [sex, setSex] = useState<Sex | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -11,13 +14,13 @@ export function SetupScreen({ onDone }: { onDone: () => void }) {
 
   async function submit() {
     if (!birthday) {
-      setError("Please pick a birthday.");
+      setError(t("setup.needBirthday"));
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await setBaby({ birthday, sex });
+      await setBaby({ birthday, sex, name: name.trim() || null, dayCutoff: "00:00" });
       onDone();
     } catch (e) {
       setError(String(e));
@@ -30,10 +33,19 @@ export function SetupScreen({ onDone }: { onDone: () => void }) {
     <div className="setup">
       <div className="setup-card">
         <div className="setup-emoji">🍼</div>
-        <h1>Baby Tracker</h1>
-        <p className="setup-sub">Let's set up your little one's profile to get started.</p>
+        <h1>{t("setup.title")}</h1>
+        <p className="setup-sub">{t("setup.subtitle")}</p>
         <label className="field">
-          <span>Birthday</span>
+          <span>{t("setup.name")}</span>
+          <input
+            type="text"
+            value={name}
+            placeholder="…"
+            onChange={(e) => setName(e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>{t("setup.birthday")}</span>
           <input
             type="date"
             value={birthday}
@@ -42,27 +54,27 @@ export function SetupScreen({ onDone }: { onDone: () => void }) {
           />
         </label>
         <div className="field">
-          <span>Sex</span>
+          <span>{t("setup.sex")}</span>
           <div className="segmented">
             <button
               type="button"
               className={sex === "female" ? "active" : ""}
               onClick={() => setSex("female")}
             >
-              ♀ Girl
+              {t("setup.girl")}
             </button>
             <button
               type="button"
               className={sex === "male" ? "active" : ""}
               onClick={() => setSex("male")}
             >
-              ♂ Boy
+              {t("setup.boy")}
             </button>
           </div>
         </div>
         {error && <div className="error">{error}</div>}
         <button className="btn primary big" onClick={submit} disabled={saving || !birthday}>
-          {saving ? "Saving…" : "Get started"}
+          {saving ? "…" : t("setup.go")}
         </button>
       </div>
     </div>

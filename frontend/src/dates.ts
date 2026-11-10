@@ -15,9 +15,16 @@ export function toLocalDateTime(d: Date): string {
   )}:${pad(d.getMinutes())}`;
 }
 
+const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+type Lang = "en" | "zh";
+
 /** "X ml" rounded. */
-export function formatMl(n: number): string {
-  return `${Math.round(n)} ml`;
+export function formatMl(n: number, lang: Lang = "en"): string {
+  const v = Math.round(n);
+  return lang === "zh" ? `${v} 毫升` : `${v} ml`;
 }
 
 export function nowDateTimeLocal(): string {
@@ -51,8 +58,8 @@ export function defaultDateTime(date: string): string {
   return `${date}T${h}:${mi}`;
 }
 
-/** Exact age: "X days old" for young babies, else "X months Y days old". */
-export function ageLabel(birthday: string): string {
+/** Exact age: "X days old" for young babies, else "X months Y days old" (EN) / 中文. */
+export function ageLabel(birthday: string, lang: Lang = "en"): string {
   const b = new Date(birthday + "T00:00:00");
   const now = new Date();
   let months = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
@@ -61,6 +68,11 @@ export function ageLabel(birthday: string): string {
     months -= 1;
     const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
     days += prevMonth.getDate();
+  }
+  if (lang === "zh") {
+    if (months < 1) return `${days}天`;
+    if (days === 0) return `${months}个月`;
+    return `${months}个月${days}天`;
   }
   if (months < 1) return `${days} days old`;
   if (days === 0) return `${months} months old`;
@@ -81,10 +93,15 @@ export function time12(iso: string): string {
   return `${h}:${m} ${suffix}`;
 }
 
-/** "Xh Ym" from hours (float). */
-export function formatHours(hours: number): string {
+/** "Xh Ym" from hours (float), EN or 中文. */
+export function formatHours(hours: number, lang: Lang = "en"): string {
   const h = Math.floor(hours);
   const m = Math.round((hours - h) * 60);
+  if (lang === "zh") {
+    if (h === 0) return `${m}分钟`;
+    if (m === 0) return `${h}小时`;
+    return `${h}小时${m}分`;
+  }
   if (h === 0) return `${m}m`;
   if (m === 0) return `${h}h`;
   return `${h}h ${m}m`;
@@ -97,14 +114,17 @@ export function hourToTime(hour: number): string {
   return `${String(h % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-/** Short weekday + day, e.g. "Mon, Nov 9". */
-export function shortDate(dateStr: string): string {
+/** Short weekday + day, e.g. "Mon, Nov 9" (EN) / "11月9日 周一" (中文). */
+export function shortDate(dateStr: string, lang: Lang = "en"): string {
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const wd = d.getDay();
+  if (lang === "zh") return `${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAYS_ZH[wd]}`;
+  return `${WEEKDAYS_EN[wd]}, ${MONTHS_EN[d.getMonth()]} ${d.getDate()}`;
 }
 
-/** "Nov 9" from a YYYY-MM-DD string. */
-export function prettyDate(dateStr: string): string {
+/** "Nov 9" (EN) / "11月9日" (中文) from a YYYY-MM-DD string. */
+export function prettyDate(dateStr: string, lang: Lang = "en"): string {
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  if (lang === "zh") return `${d.getMonth() + 1}月${d.getDate()}日`;
+  return `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`;
 }

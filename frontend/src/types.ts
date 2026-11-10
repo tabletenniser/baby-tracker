@@ -3,6 +3,13 @@ export type Sex = "male" | "female";
 export interface Baby {
   birthday: string | null;
   sex: Sex | null;
+  name: string | null;
+  dayCutoff: string | null; // HH:MM, when the day starts (for sleep attribution)
+}
+
+export interface DayCutoffData {
+  global: string;
+  overrides: Record<string, string>; // YYYY-MM-DD -> HH:MM
 }
 
 export type FeedingType = "breast" | "bottle";
@@ -99,6 +106,7 @@ export interface TimelineData {
   eliminations: Elimination[];
   supplements: Supplement[];
   daily: DailySummary;
+  cutoff: string;
 }
 
 export interface MilkPoint {

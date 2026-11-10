@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createSupplement, updateSupplement } from "../api";
 import { defaultDateTime } from "../dates";
+import { SUPPLEMENT_CHOICES, supplementLabel, useLang } from "../i18n";
 import type { Supplement } from "../types";
 
 interface Props {
@@ -10,10 +11,9 @@ interface Props {
   onCancel: () => void;
 }
 
-const CHOICES = ["Vitamin D", "Probiotic", "Iron", "Vitamin C", "Other"];
-
 export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
-  const isCustom = initial?.name ? !CHOICES.includes(initial.name) : false;
+  const { t } = useLang();
+  const isCustom = initial?.name ? !SUPPLEMENT_CHOICES.includes(initial.name) : false;
   const [name, setName] = useState(initial?.name ?? "");
   const [custom, setCustom] = useState(isCustom ? initial!.name : "");
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
@@ -24,11 +24,11 @@ export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
 
   async function submit() {
     if (!effectiveName.trim()) {
-      setError("Please choose or enter a supplement.");
+      setError(t("supp.needName"));
       return;
     }
     if (!datetime) {
-      setError("Please set a time.");
+      setError(t("feeding.needTime"));
       return;
     }
     setSaving(true);
@@ -47,7 +47,7 @@ export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
   return (
     <div className="supp-form">
       <label className="field">
-        <span>Time</span>
+        <span>{t("supp.time")}</span>
         <input
           type="datetime-local"
           value={datetime}
@@ -55,35 +55,35 @@ export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
         />
       </label>
       <div className="field">
-        <span>Supplement</span>
+        <span>{t("supp.name")}</span>
         <select value={name} onChange={(e) => setName(e.target.value)}>
-          <option value="">Choose…</option>
-          {CHOICES.map((c) => (
+          <option value="">{t("supp.choose")}</option>
+          {SUPPLEMENT_CHOICES.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {supplementLabel(c, t)}
             </option>
           ))}
         </select>
       </div>
       {name === "Other" && (
         <label className="field">
-          <span>Name</span>
+          <span>{t("supp.customName")}</span>
           <input
             type="text"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
-            placeholder="e.g. Calcium"
+            placeholder="…"
           />
         </label>
       )}
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
         <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "Saving…" : initial ? "Update" : "Add"}
+          {saving ? "…" : initial ? t("supp.edit") : t("supp.add")}
         </button>
         {initial && (
           <button className="btn ghost" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
       </div>
