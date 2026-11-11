@@ -42,19 +42,20 @@ Two tabs:
 - Only the columns you need are filled in per row — the layout is designed to be quick to type in a spreadsheet:
 
   ```
-  datetime,type,amount_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,breast_ml,duration_hours,size,watery,supplement
-  2026-11-01 08:00,breast,60,29,31,5000,08:07,08:20,,,,,,
-  2026-11-01 02:18,bottle,,,,,,,30,0,,,,
-  2026-11-01 11:30,sleep,,,,,,,,,2.5,,,
-  2026-11-01 14:00,poop,,,,,,,,,,M,2,
-  2026-11-01 15:00,pee,,,,,,,,,,,,
-  2026-11-01 18:00,supplement,,,,,,,,,,,,Vitamin D
+  date,time,type,amount_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,breast_ml,duration_hours,size,watery,supplement
+  2026-11-01,08:00,breast,60,29,31,5000,08:07,08:20,,,,,,
+  2026-11-01,02:18,bottle,,,,,,,30,0,,,,
+  2026-11-01,11:30,sleep,,,,,,,,,2.5,,,
+  2026-11-01,14:00,poop,,,,,,,,,,M,2,
+  2026-11-01,15:00,pee,,,,,,,,,,,,
+  2026-11-01,18:00,supplement,,,,,,,,,,,,Vitamin D
   ```
 
-  - `type`: `breast` · `bottle` · `sleep` (`datetime` = end time, `duration_hours`) · `pee` · `poop` (`size` S/M/L, `watery` 1/2/3) · `supplement` (name)
+  - **Date and time are separate columns** so you can copy a date down a column and just fill in each `time`. A blank `time` defaults to noon (12:00). Row order does not matter — each row is an independent event and the app sorts by date/time.
+  - `type`: `breast` · `bottle` · `sleep` (`time` = end time, `duration_hours`) · `pee` · `poop` (`size` S/M/L, `watery` 1/2/3) · `supplement` (name)
   - **Breast** — fill `left_ml` + `right_ml` + `before_weight` to preserve the full per-breast split and the growth-chart "before" weight (`amount_ml` = the total). Optional `left_time` / `right_time` (HH:MM) record when each side's weight was taken, so the app can show how long each breast took. Or just fill `amount_ml` for a quick total-only entry (attributed to the left breast), or leave it empty for a "before weight only" entry you can complete later.
   - **Bottle** — `formula_ml` and/or `breast_ml` (breast milk given by bottle); `amount_ml` is used as the formula amount if `formula_ml` is left empty.
-  - Datetimes accept several formats (e.g. `YYYY-MM-DD HH:MM` or `M/D/YYYY h:MM AM`).
+  - Dates accept `YYYY-MM-DD`, `YYYY/MM/DD`, `M/D/YYYY`, `D/M/YYYY`; times accept `HH:MM`, `HH:MM:SS`, `h:MM AM/PM`. An older combined `datetime` column is still accepted on import.
   - Export preserves all of this, so **export → edit in Sheets → import** round-trips without losing the left/right split or weights.
 
 ### Entry details

@@ -3,7 +3,7 @@
 One flat row per event, with a `type` column. Only the columns relevant to a
 row need to be filled in, so it's quick to type in a spreadsheet:
 
-    datetime,type,amount_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,breast_ml,duration_hours,size,watery,supplement
+    date,time,type,amount_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,breast_ml,duration_hours,size,watery,supplement
 
 type values: breast | bottle | sleep | pee | poop | supplement
   - breast   : amount_ml = total (ml); left_ml / right_ml = per-breast split;
@@ -13,18 +13,19 @@ type values: breast | bottle | sleep | pee | poop | supplement
                left_time / right_time (optional HH:MM) = when each side's weight
                was taken, so the app can show how long each breast took.
   - bottle   : formula_ml and/or breast_ml (amount_ml is used as formula if set)
-  - sleep    : datetime = END time, duration_hours = how long (default 3)
+  - sleep    : date/time = END time, duration_hours = how long (default 3)
   - pee/poop : size (S/M/L, default M) and watery (1 formed / 2 middle / 3 watery) for poop
   - supplement : supplement = name (e.g. "Vitamin D")
 """
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, date, time
 
 from main import feeding_breast, sleep_view
 
 HEADER = [
-    "datetime",
+    "date",
+    "time",
     "type",
     "amount_ml",
     "left_ml",
@@ -81,6 +82,64 @@ def _fmt_dt(iso: str) -> str:
         return iso or ""
 
 
+def _split_dt(iso: str):
+    """'2026-11-09T20:28' -> ('2026-11-09', '20:28') for two CSV columns."""
+    try:
+        dt = datetime.fromisoformat(iso)
+        return dt.strftime("%Y-%m-%d"), dt.strftime("%H:%M")
+    except (ValueError, TypeError):
+        return (iso or ""), ""
+
+
+_DATE_FORMATS = ["%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y", "%d/%m/%Y"]
+_TIME_FORMATS = ["%H:%M:%S", "%H:%M", "%I:%M:%S %p", "%I:%M %p", "%I:%M", "%H"]
+
+
+def parse_date(s: str):
+    """Parse a date in several common formats. Returns a date, or None."""
+    s = (s or "").strip()
+    if not s:
+        return None
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def parse_time(s: str):
+    """Parse a time in several common formats. Returns a time, or None."""
+    s = (s or "").strip()
+    if not s:
+        return None
+    for fmt in _TIME_FORMATS:
+        try:
+            return datetime.strptime(s, fmt).time()
+        except ValueError:
+            continue
+    return None
+
+
+def _row_datetime(row) -> str:
+    """Combine a row's date/time into 'YYYY-MM-DDTHH:MM'.
+
+    Supports the new split columns (date + time) and the old combined column
+    (datetime) for backward compatibility. A blank time defaults to noon
+    (12:00) so bulk rows still import.
+    """
+    combined = (row.get("datetime") or "").strip()
+    if combined:
+        return parse_dt(combined)
+    d = parse_date(row.get("date") or "")
+    if not d:
+        return None
+    t = parse_time(row.get("time") or "")
+    if t is None:
+        t = time(12, 0)
+    return datetime(d.year, d.month, d.day, t.hour, t.minute).strftime("%Y-%m-%dT%H:%M")
+
+
 def _num(v, default=0.0) -> float:
     try:
         return float(v)
@@ -111,11 +170,12 @@ def export_csv(data: dict) -> str:
 
     feedings = sorted(data.get("feedings", []), key=lambda f: f.get("datetime", ""))
     for f in feedings:
+        d, t = _split_dt(f.get("datetime", ""))
         if f.get("type") == "breast":
             breast, left, right = feeding_breast(f)
             before = _before_weight(f)
             w.writerow([
-                _fmt_dt(f.get("datetime", "")),
+                d, t,
                 "breast",
                 round(breast, 1),  # amount_ml (total)
                 round(left, 1),    # left_ml
@@ -127,7 +187,7 @@ def export_csv(data: dict) -> str:
             ])
         else:
             w.writerow([
-                _fmt_dt(f.get("datetime", "")),
+                d, t,
                 "bottle",
                 "",                                    # amount_ml
                 "", "", "", "", "",                    # left_ml, right_ml, before_weight, left_time, right_time
@@ -138,16 +198,19 @@ def export_csv(data: dict) -> str:
 
     for s in sorted(data.get("sleeps", []), key=lambda s: s.get("endTime", "")):
         view = sleep_view(s)
-        w.writerow([_fmt_dt(view["end"]), "sleep", "", "", "", "", "", "", "", "", round(view["hours"], 2), "", "", ""])
+        d, t = _split_dt(view["end"])
+        w.writerow([d, t, "sleep", "", "", "", "", "", "", "", round(view["hours"], 2), "", "", "", ""])
 
     for e in sorted(data.get("eliminations", []), key=lambda e: e.get("datetime", "")):
+        d, t = _split_dt(e.get("datetime", ""))
         if e.get("type") == "poop":
-            w.writerow([_fmt_dt(e.get("datetime", "")), "poop", "", "", "", "", "", "", "", "", "", e.get("size", "M"), e.get("watery", 2), ""])
+            w.writerow([d, t, "poop", "", "", "", "", "", "", "", "", "", e.get("size", "M"), e.get("watery", 2), ""])
         else:
-            w.writerow([_fmt_dt(e.get("datetime", "")), "pee", "", "", "", "", "", "", "", "", "", "", "", ""])
+            w.writerow([d, t, "pee", "", "", "", "", "", "", "", "", "", "", "", ""])
 
     for s in sorted(data.get("supplements", []), key=lambda s: s.get("datetime", "")):
-        w.writerow([_fmt_dt(s.get("datetime", "")), "supplement", "", "", "", "", "", "", "", "", "", "", "", s.get("name", "")])
+        d, t = _split_dt(s.get("datetime", ""))
+        w.writerow([d, t, "supplement", "", "", "", "", "", "", "", "", "", "", "", s.get("name", "")])
 
     return buf.getvalue()
 
@@ -158,13 +221,13 @@ def template_csv() -> str:
     w = csv.writer(buf)
     w.writerow(HEADER)
     # breast: total 60 = left 29 + right 31, before weight 5000g, left done 08:07, right 08:20
-    w.writerow(["2026-11-01 08:00", "breast", "60", "29", "31", "5000", "08:07", "08:20", "", "", "", "", "", ""])
+    w.writerow(["2026-11-01", "08:00", "breast", "60", "29", "31", "5000", "08:07", "08:20", "", "", "", "", "", ""])
     # bottle: 30ml formula
-    w.writerow(["2026-11-01 02:18", "bottle", "", "", "", "", "", "", "30", "0", "", "", "", ""])
-    w.writerow(["2026-11-01 11:30", "sleep", "", "", "", "", "", "", "", "", "2.5", "", "", ""])
-    w.writerow(["2026-11-01 14:00", "poop", "", "", "", "", "", "", "", "", "", "M", "2", ""])
-    w.writerow(["2026-11-01 15:00", "pee", "", "", "", "", "", "", "", "", "", "", "", ""])
-    w.writerow(["2026-11-01 18:00", "supplement", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D"])
+    w.writerow(["2026-11-01", "02:18", "bottle", "", "", "", "", "", "30", "0", "", "", "", "", ""])
+    w.writerow(["2026-11-01", "11:30", "sleep", "", "", "", "", "", "", "", "2.5", "", "", "", ""])
+    w.writerow(["2026-11-01", "14:00", "poop", "", "", "", "", "", "", "", "", "M", "2", "", ""])
+    w.writerow(["2026-11-01", "15:00", "pee", "", "", "", "", "", "", "", "", "", "", "", ""])
+    w.writerow(["2026-11-01", "18:00", "supplement", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D"])
     return buf.getvalue()
 
 
@@ -216,9 +279,9 @@ def import_csv(text: str, clear: bool = False):
 
     for i, row in enumerate(reader, start=2):  # line 1 is the header
         raw_type = (row.get("type") or "").strip().lower()
-        dt = parse_dt(row.get("datetime") or "")
+        dt = _row_datetime(row)
         if not dt:
-            errors.append(f"line {i}: missing/invalid datetime")
+            errors.append(f"line {i}: missing/invalid date (need a 'date' column, or 'date'+'time')")
             skipped += 1
             continue
         if raw_type not in VALID_TYPES:
