@@ -7,6 +7,7 @@ import type { Feeding, FeedingInput, FeedingType, Side } from "../types";
 interface WeightRow {
   weight: string;
   side: Side;
+  time?: string;
 }
 
 function computeBreast(rows: { weight: number; side: Side }[]) {
@@ -42,6 +43,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
       const w = (initial.weights ?? []).map((x) => ({
         weight: String(x.weight),
         side: x.side,
+        time: x.time,
       }));
       return w.length ? w : [{ weight: "", side: "na" }];
     }
@@ -78,7 +80,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
     setWeights((ws) => ws.map((w, idx) => (idx === i ? { ...w, ...patch } : w)));
   }
   function addWeight() {
-    setWeights((ws) => [...ws, { weight: "", side: "left" }]);
+    setWeights((ws) => [...ws, { weight: "", side: "left", time: "" }]);
   }
   function removeWeight(i: number) {
     setWeights((ws) => ws.filter((_, idx) => idx !== i));
@@ -101,6 +103,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
       input.weights = valid.map((r, i) => ({
         weight: parseFloat(r.weight),
         side: i === 0 ? "na" : r.side,
+        ...(r.time ? { time: r.time } : {}),
       }));
     } else {
       input.bottleFormulaMl = parseFloat(bottleFormula) || 0;
@@ -152,7 +155,7 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
           <div className="weights-head">
             <span>{t("feeding.weight")}</span>
             <span>{t("feeding.side")}</span>
-            <span />
+            <span>{t("feeding.timeCol")}</span>
           </div>
           {weights.map((w, i) => (
             <div className="weight-row" key={i}>
@@ -174,6 +177,16 @@ export function FeedingForm({ date, initial, onSubmit, onCancel }: Props) {
                   <option value="right">{t("feeding.right")}</option>
                   <option value="na">{t("feeding.na")}</option>
                 </select>
+              )}
+              {i === 0 ? (
+                <span className="time-cell" />
+              ) : (
+                <input
+                  type="time"
+                  value={w.time || ""}
+                  onChange={(e) => setWeight(i, { time: e.target.value })}
+                  title={t("feeding.timeTitle")}
+                />
               )}
               <button
                 type="button"

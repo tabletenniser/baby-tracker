@@ -18,6 +18,7 @@ export type Side = "left" | "right" | "na";
 export interface WeightEntry {
   weight: number;
   side: Side;
+  time?: string; // optional HH:MM when this weight was taken (per-breast duration)
 }
 
 export interface Feeding {
@@ -31,6 +32,8 @@ export interface Feeding {
   leftMl: number;
   rightMl: number;
   formulaMl: number;
+  leftMinutes?: number;
+  rightMinutes?: number;
 }
 
 export interface FeedingInput {

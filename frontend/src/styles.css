@@ -371,7 +371,7 @@ input[type="number"] {
 .weights-head,
 .weight-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 40px;
+  grid-template-columns: 1fr 1fr 1fr 36px;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
@@ -384,6 +384,11 @@ input[type="number"] {
 .side-na {
   text-align: center;
   color: var(--muted);
+  font-size: 0.85rem;
+}
+.weight-row input[type="time"] {
+  width: 100%;
+  padding: 8px 6px;
   font-size: 0.85rem;
 }
 

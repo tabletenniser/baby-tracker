@@ -107,6 +107,21 @@ export function formatHours(hours: number, lang: Lang = "en"): string {
   return `${h}h ${m}m`;
 }
 
+/** "Xm" (or "Xh Ym") from whole minutes, EN or 中文. */
+export function formatMins(mins: number, lang: Lang = "en"): string {
+  const m = Math.round(mins);
+  if (lang === "zh") {
+    if (m < 60) return `${m}分钟`;
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    return r === 0 ? `${h}小时` : `${h}小时${r}分`;
+  }
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r === 0 ? `${h}h` : `${h}h ${r}m`;
+}
+
 /** Convert an hour-of-day (0-24 float) to "HH:MM". */
 export function hourToTime(hour: number): string {
   const h = Math.floor(hour);

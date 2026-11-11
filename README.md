@@ -42,17 +42,17 @@ Two tabs:
 - Only the columns you need are filled in per row — the layout is designed to be quick to type in a spreadsheet:
 
   ```
-  datetime,type,amount_ml,left_ml,right_ml,before_weight,formula_ml,breast_ml,duration_hours,size,watery,supplement
-  2026-11-01 08:00,breast,60,29,31,5000,,,,,,
-  2026-11-01 02:18,bottle,,,,,30,0,,,,
-  2026-11-01 11:30,sleep,,,,,,,2.5,,,,
-  2026-11-01 14:00,poop,,,,,,,,M,2,,
-  2026-11-01 15:00,pee,,,,,,,,,,
-  2026-11-01 18:00,supplement,,,,,,,,,,Vitamin D
+  datetime,type,amount_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,breast_ml,duration_hours,size,watery,supplement
+  2026-11-01 08:00,breast,60,29,31,5000,08:07,08:20,,,,,,
+  2026-11-01 02:18,bottle,,,,,,,30,0,,,,
+  2026-11-01 11:30,sleep,,,,,,,,,2.5,,,
+  2026-11-01 14:00,poop,,,,,,,,,,M,2,
+  2026-11-01 15:00,pee,,,,,,,,,,,,
+  2026-11-01 18:00,supplement,,,,,,,,,,,,Vitamin D
   ```
 
   - `type`: `breast` · `bottle` · `sleep` (`datetime` = end time, `duration_hours`) · `pee` · `poop` (`size` S/M/L, `watery` 1/2/3) · `supplement` (name)
-  - **Breast** — fill `left_ml` + `right_ml` + `before_weight` to preserve the full per-breast split and the growth-chart "before" weight (`amount_ml` = the total). Or just fill `amount_ml` for a quick total-only entry (attributed to the left breast), or leave it empty for a "before weight only" entry you can complete later.
+  - **Breast** — fill `left_ml` + `right_ml` + `before_weight` to preserve the full per-breast split and the growth-chart "before" weight (`amount_ml` = the total). Optional `left_time` / `right_time` (HH:MM) record when each side's weight was taken, so the app can show how long each breast took. Or just fill `amount_ml` for a quick total-only entry (attributed to the left breast), or leave it empty for a "before weight only" entry you can complete later.
   - **Bottle** — `formula_ml` and/or `breast_ml` (breast milk given by bottle); `amount_ml` is used as the formula amount if `formula_ml` is left empty.
   - Datetimes accept several formats (e.g. `YYYY-MM-DD HH:MM` or `M/D/YYYY h:MM AM`).
   - Export preserves all of this, so **export → edit in Sheets → import** round-trips without losing the left/right split or weights.
@@ -60,7 +60,7 @@ Two tabs:
 ### Entry details
 - **First-run setup** — asks for the baby's name, birthday, and sex.
 - **Feedings** (with historical backfilling): defaults to the current time, but you can change it and navigate to past days.
-  - **Breast (weight method):** enter multiple weights; the first is the "before" weight, each later one is tagged **Left / Right / N/A**. The app calculates the amount fed for each breast. The "before" weight also feeds the growth chart. You can **save with just a "before" weight** (it shows as "before weight only") and add more weights later by editing the entry.
+  - **Breast (weight method):** enter multiple weights; the first is the "before" weight, each later one is tagged **Left / Right / N/A** and can have an optional **time** (when that weight was taken). The app calculates the amount fed for each breast, and — when times are given — how long each breast took (shown in the timeline, e.g. "L 30 ml (7m) · R 30 ml (13m)"). The "before" weight also feeds the growth chart. You can **save with just a "before" weight** (it shows as "before weight only") and add more weights later by editing the entry.
   - **Bottle:** enter formula milk (ml) and breast milk (ml). Leave a field empty to treat it as zero.
   - Number fields use **direct entry** (no up/down spinner) so you can type amounts quickly.
 - **Sleep** — log by *duration + end time* (the default) **or** *start + end time*.

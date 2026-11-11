@@ -6,7 +6,7 @@ import {
   deleteSupplement,
   getTimeline,
 } from "../api";
-import { formatHours, formatMl, shortDate, timeOf, todayStr } from "../dates";
+import { formatHours, formatMins, formatMl, shortDate, timeOf, todayStr } from "../dates";
 import { supplementLabel, useLang } from "../i18n";
 import type {
   Elimination,
@@ -48,8 +48,8 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
       f.type === "breast"
         ? f.breastMl > 0
           ? `${t("item.total")} ${formatMl(f.breastMl, lang)}${
-              f.leftMl > 0 ? ` · ${t("item.left")} ${formatMl(f.leftMl, lang)}` : ""
-            }${f.rightMl > 0 ? ` · ${t("item.right")} ${formatMl(f.rightMl, lang)}` : ""}`
+              f.leftMl > 0 ? ` · ${t("item.left")} ${formatMl(f.leftMl, lang)}${f.leftMinutes ? ` (${formatMins(f.leftMinutes, lang)})` : ""}` : ""
+            }${f.rightMl > 0 ? ` · ${t("item.right")} ${formatMl(f.rightMl, lang)}${f.rightMinutes ? ` (${formatMins(f.rightMinutes, lang)})` : ""}` : ""}`
           : t("item.beforeOnly")
         : `${t("item.formula")} ${formatMl(f.formulaMl, lang)}${
             f.breastMl > 0 ? ` · ${t("item.breastMl")} ${formatMl(f.breastMl, lang)}` : ""

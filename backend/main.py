@@ -155,15 +155,68 @@ def feeding_formula(f):
     return 0.0
 
 
+def _weight_time_dt(start: datetime, hhmm: str):
+    """Combine the feeding's date with a weight's HH:MM time.
+
+    Returns a datetime on the feeding's day; if it lands before the start
+    (the feeding crossed midnight) it rolls to the next day. None if unparseable.
+    """
+    try:
+        h, m = hhmm.split(":")
+        dt = start.replace(hour=int(h), minute=int(m), second=0, microsecond=0)
+        if dt < start:
+            dt += timedelta(days=1)
+        return dt
+    except (ValueError, AttributeError):
+        return None
+
+
+def compute_breast_minutes(weights, start_iso: str):
+    """Return (left_minutes, right_minutes) from weight timestamps.
+
+    Each weight that carries a time contributes the gap since the previous
+    timestamped point (starting from the feeding start), attributed to that
+    weight's side — mirroring how compute_breast attributes milk deltas.
+    """
+    try:
+        start = datetime.fromisoformat(start_iso)
+    except (ValueError, TypeError):
+        return 0, 0
+    left = right = 0.0
+    prev = start
+    for w in weights:
+        if not w.time:
+            continue
+        dt = _weight_time_dt(start, w.time)
+        if dt is None:
+            continue
+        gap = (dt - prev).total_seconds() / 60.0
+        if gap > 0:
+            if w.side == "left":
+                left += gap
+            elif w.side == "right":
+                right += gap
+        prev = dt
+    return round(left), round(right)
+
+
 def feeding_view(f):
     breast, left, right = feeding_breast(f)
-    return {
+    view = {
         **f,
         "breastMl": round(breast, 1),
         "leftMl": round(left, 1),
         "rightMl": round(right, 1),
         "formulaMl": round(feeding_formula(f), 1),
     }
+    if f.get("type") == "breast" and f.get("weights") and f.get("datetime"):
+        lm, rm = compute_breast_minutes([WeightEntry(**w) for w in f["weights"]], f["datetime"])
+        view["leftMinutes"] = lm
+        view["rightMinutes"] = rm
+    else:
+        view["leftMinutes"] = 0
+        view["rightMinutes"] = 0
+    return view
 
 
 def sleep_view(s):

@@ -70,6 +70,8 @@ const en: Record<string, string> = {
   "feeding.needWeights": "Add a before weight to save — you can add more weights later to calculate the amount.",
   "feeding.side": "Side",
   "feeding.after": "after",
+  "feeding.timeCol": "Time",
+  "feeding.timeTitle": "When this weight was taken (optional)",
 
   "sleep.add": "Add sleep",
   "sleep.edit": "Edit sleep",
@@ -255,6 +257,8 @@ const zh: Record<string, string> = {
   "feeding.needWeights": "请添加喂奶前体重以保存，之后可再添加体重来计算奶量。",
   "feeding.side": "侧",
   "feeding.after": "喂奶后",
+  "feeding.timeCol": "时间",
+  "feeding.timeTitle": "记录此体重时的时间（可选）",
 
   "sleep.add": "添加睡眠",
   "sleep.edit": "编辑睡眠",

@@ -31,6 +31,7 @@ class DayCutoffSet(BaseModel):
 class WeightEntry(BaseModel):
     weight: float  # grams
     side: Side = "na"
+    time: Optional[str] = None  # optional HH:MM — when this weight was taken (per-breast duration)
 
 
 class FeedingCreate(BaseModel):
