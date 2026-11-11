@@ -1,18 +1,18 @@
 :root {
-  --bg-1: #fff5f7;
-  --bg-2: #eef4ff;
+  --bg-1: #fffdf5;
+  --bg-2: #fff6dd;
   --card: #ffffff;
-  --ink: #3a2e39;
-  --muted: #8a7f8a;
-  --line: #f0e2e8;
-  --primary: #ff7aa2;
-  --primary-dark: #f0568a;
-  --primary-soft: #ffe1ec;
+  --ink: #3d3420;
+  --muted: #8a8270;
+  --line: #f3e6c8;
+  --primary: #f5a623;
+  --primary-dark: #d98e04;
+  --primary-soft: #fff3d6;
   --accent: #6aa9ff;
   --ok: #4caf7d;
   --danger: #e05656;
   --radius: 16px;
-  --shadow: 0 6px 20px rgba(120, 60, 90, 0.08);
+  --shadow: 0 6px 20px rgba(150, 110, 20, 0.10);
   --tap: 44px;
 }
 
@@ -272,7 +272,7 @@ input[type="number"] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  background: #f6eef1;
+  background: #fbf3e0;
   padding: 5px;
   border-radius: 12px;
   margin-bottom: 14px;
@@ -304,7 +304,7 @@ input[type="number"] {
   padding: 10px 16px;
   min-height: var(--tap);
   cursor: pointer;
-  background: #f0e2e8;
+  background: #f3e6c8;
   color: var(--ink);
   transition: transform 0.05s ease, background 0.15s ease;
 }
@@ -353,7 +353,7 @@ input[type="number"] {
 
 /* Preview */
 .preview {
-  background: #f6f2f7;
+  background: #f7f2e8;
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.9rem;
@@ -448,7 +448,7 @@ input[type="number"] {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  background: #f6eef1;
+  background: #fbf3e0;
   color: var(--muted);
 }
 .vitamin-toggle.on {
@@ -699,7 +699,7 @@ input[type="number"] {
   border-bottom: none;
 }
 .timeline-item.overnight {
-  background: linear-gradient(90deg, #eef4ff, transparent);
+  background: linear-gradient(90deg, #fff6dd, transparent);
   border-radius: 10px;
 }
 .timeline-time {
@@ -731,7 +731,7 @@ input[type="number"] {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(60, 30, 45, 0.45);
+  background: rgba(61, 52, 32, 0.45);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -809,11 +809,11 @@ input[type="number"] {
   color: #fff;
 }
 .balance-chip.left {
-  background: #ff7aa2;
+  background: #f5a623;
 }
 .balance-chip.right {
-  background: #f0b8d0;
-  color: #7a3b58;
+  background: #ffd98a;
+  color: #7a5a1a;
 }
 .growth-latest {
   font-size: 1rem;
@@ -838,7 +838,7 @@ input[type="number"] {
 
 /* Summary: highlighted total + supplement names */
 .stat-total {
-  background: linear-gradient(135deg, var(--primary-soft), #ffe9f1);
+  background: linear-gradient(135deg, var(--primary-soft), #fff3d6);
   border: 1px solid var(--primary);
 }
 .stat-supps {

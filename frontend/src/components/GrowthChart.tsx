@@ -42,7 +42,7 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart margin={{ top: 10, right: 12, left: -8, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0e2e8" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3e6c8" />
             <XAxis
               dataKey="x"
               type="number"
@@ -62,20 +62,20 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
                 name,
               ]}
             />
-            <Line data={toXY(curves.p3)} dataKey="y" name="3rd" stroke="#e3d5dc" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Line data={toXY(curves.p15)} dataKey="y" name="15th" stroke="#f0c4d8" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#f0568a" dot={false} strokeWidth={2} isAnimationActive={false} />
-            <Line data={toXY(curves.p85)} dataKey="y" name="85th" stroke="#f0c4d8" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#e3d5dc" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Scatter data={measurements} fill="#3a2e39" name={t("growth.baby")} />
+            <Line data={toXY(curves.p3)} dataKey="y" name="3rd" stroke="#f0e4c4" dot={false} strokeWidth={1} isAnimationActive={false} />
+            <Line data={toXY(curves.p15)} dataKey="y" name="15th" stroke="#ffd27a" dot={false} strokeWidth={1} isAnimationActive={false} />
+            <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#d98e04" dot={false} strokeWidth={2} isAnimationActive={false} />
+            <Line data={toXY(curves.p85)} dataKey="y" name="85th" stroke="#ffd27a" dot={false} strokeWidth={1} isAnimationActive={false} />
+            <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#f0e4c4" dot={false} strokeWidth={1} isAnimationActive={false} />
+            <Scatter data={measurements} fill="#3d3420" name={t("growth.baby")} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
       <div className="growth-legend">
-        <span><i style={{ background: "#f0568a" }} /> {t("growth.p50")}</span>
-        <span><i style={{ background: "#f0c4d8" }} /> {t("growth.p1585")}</span>
-        <span><i style={{ background: "#e3d5dc" }} /> {t("growth.p397")}</span>
-        <span><i style={{ background: "#3a2e39" }} /> ● {t("growth.baby")}</span>
+        <span><i style={{ background: "#d98e04" }} /> {t("growth.p50")}</span>
+        <span><i style={{ background: "#ffd27a" }} /> {t("growth.p1585")}</span>
+        <span><i style={{ background: "#f0e4c4" }} /> {t("growth.p397")}</span>
+        <span><i style={{ background: "#3d3420" }} /> ● {t("growth.baby")}</span>
       </div>
       <div className="muted small" style={{ marginTop: 8 }}>
         {t("growth.note")}
