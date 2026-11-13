@@ -265,6 +265,11 @@ input[type="number"] {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+.row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
 
 /* Segmented control */
 .segmented {
@@ -606,6 +611,54 @@ input[type="number"] {
   .add-label {
     font-size: 0.68rem;
   }
+}
+
+/* Combined "log at a time" button */
+.log-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+.log-btn:active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Combined log form */
+.log-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.log-section {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.log-section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.log-emoji {
+  font-size: 1.1rem;
+}
+.log-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.log-check input {
+  width: 20px;
+  height: 20px;
 }
 
 /* ------------------------------------------------------------- Timeline */

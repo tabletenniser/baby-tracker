@@ -22,13 +22,14 @@ import { DayCutoffControl } from "./DayCutoffControl";
 import { EliminationForm } from "./EliminationForm";
 import { FeedingForm } from "./FeedingForm";
 import { FeedingTrend } from "./FeedingTrend";
+import { LogForm } from "./LogForm";
 import { MilkCurve } from "./MilkCurve";
 import { Modal } from "./Modal";
 import { SleepForm } from "./SleepForm";
 import { SupplementForm } from "./SupplementForm";
 
 type Kind = "feeding" | "sleep" | "elimination" | "supplement";
-type ModalKind = Kind | null;
+type ModalKind = Kind | "log" | null;
 type T = (key: string, vars?: Record<string, string | number>) => string;
 
 interface Item {
@@ -160,7 +161,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     };
   }, [date, refreshSignal]);
 
-  function openAdd(kind: Kind, addType?: FeedingType | ElimType) {
+  function openAdd(kind: Kind | "log", addType?: FeedingType | ElimType) {
     setEditFeeding(null);
     setEditSleep(null);
     setEditElim(null);
@@ -233,6 +234,10 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <span className="add-label">{t("add.supplement")}</span>
         </button>
       </div>
+
+      <button className="btn log-btn" onClick={() => openAdd("log")}>
+        ⏱️ {t("add.log")}
+      </button>
 
       <section className="card">
         <div className="timeline-head">
@@ -320,6 +325,18 @@ export function TimelineView({ date, refreshSignal }: Props) {
             key={editSupp?.id ?? "new"}
             date={date}
             initial={editSupp}
+            onSubmit={async () => {
+              closeModal();
+              await refresh();
+            }}
+            onCancel={closeModal}
+          />
+        </Modal>
+      )}
+      {modal === "log" && (
+        <Modal title={t("log.title")} onClose={closeModal}>
+          <LogForm
+            date={date}
             onSubmit={async () => {
               closeModal();
               await refresh();

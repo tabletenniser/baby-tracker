@@ -7,6 +7,7 @@ import type {
   Feeding,
   FeedingInput,
   GrowthData,
+  LogRequest,
   MilkCurveData,
   Sleep,
   SleepInput,
@@ -86,6 +87,13 @@ export const deleteSupplement = (id: string) =>
 
 // Daily summary
 export const getDaily = (date: string) => request<DailySummary>(`/api/daily?date=${date}`);
+
+// Log several events at one timestamp
+export const logEvents = (req: LogRequest) =>
+  request<{ ok: boolean; created: Record<string, string[]> }>("/api/log", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
 
 // Timeline
 export const getTimeline = (date: string) => request<TimelineData>(`/api/timeline?date=${date}`);
