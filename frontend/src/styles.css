@@ -650,15 +650,36 @@ input[type="number"] {
 .log-emoji {
   font-size: 1.1rem;
 }
-.log-check {
+.log-toggles {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  padding: 6px 0;
 }
-.log-check input {
-  width: 20px;
-  height: 20px;
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.toggle-chip:active {
+  transform: scale(0.98);
+}
+.toggle-chip.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.chip-check {
+  font-weight: 700;
+  color: var(--primary-dark);
 }
 
 /* ------------------------------------------------------------- Timeline */

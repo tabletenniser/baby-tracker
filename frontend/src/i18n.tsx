@@ -124,6 +124,7 @@ const en: Record<string, string> = {
   "supp.iron": "Iron",
   "supp.vitaminC": "Vitamin C",
   "supp.other": "Other",
+  "supp.otherPlaceholder": "e.g. DHA",
   "supp.needName": "Please choose or enter a supplement.",
   "supp.customName": "Name",
 
@@ -332,6 +333,7 @@ const zh: Record<string, string> = {
   "supp.iron": "铁",
   "supp.vitaminC": "维生素C",
   "supp.other": "其他",
+  "supp.otherPlaceholder": "例如 DHA",
   "supp.needName": "请选择或输入补充剂。",
   "supp.customName": "名称",
 
