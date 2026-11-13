@@ -2,7 +2,7 @@
 
 Concise format: NO `type` column. Each row is one timestamp, and you can log
 several events in the same row — the event type is inferred from which columns
-are filled. Put "YES" in the pee / poop columns to record those.
+are filled. Put "Y" in the pee / poop columns to record those.
 
     date,time,breast_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,bottle_breast_ml,sleep_hours,pee,poop,poop_size,poop_watery,supplement
 
@@ -15,13 +15,13 @@ Columns:
   - formula_ml       : formula in a bottle (ml).
   - bottle_breast_ml : expressed breast milk in a bottle (ml).
   - sleep_hours      : a nap/sleep of this many hours ENDING at the row time.
-  - pee / poop       : put YES (or y/1/x) to record a pee / poop at this time.
+  - pee / poop       : put Y (also accepts YES / y / 1 / x) to record a pee / poop.
   - poop_size        : S / M / L (optional, leave blank if not noted).
   - poop_watery      : 1 formed / 2 middle / 3 watery (optional, leave blank if not noted).
   - supplement       : name(s), e.g. "Vitamin D" or "Vitamin D; DHA" (semicolon-separate several).
 
 Example — 7am with a breast feed + bottle + pee + vitamin D in ONE row:
-    2026-11-01,07:00,60,29,31,5000,,,30,0,,YES,,,Vitamin D
+    2026-11-01,07:00,60,29,31,5000,,,30,0,,Y,,,Vitamin D
 
 Import still accepts the OLD format (with a `type` column, one event per row)
 for backward compatibility.
@@ -248,8 +248,8 @@ def _group_row(g, d, t):
         round(g["formula_ml"], 1) if g["formula_ml"] else "",
         round(g["bottle_breast_ml"], 1) if g["bottle_breast_ml"] else "",
         round(g["sleep_hours"], 2) if g["sleep_hours"] else "",
-        "YES" if g["pee"] else "",
-        "YES" if g["poop"] else "",
+        "Y" if g["pee"] else "",
+        "Y" if g["poop"] else "",
         g["poop_size"] if g["poop"] else "",
         g["poop_watery"] if g["poop"] else "",
         "; ".join(g["supplements"]),
@@ -298,13 +298,13 @@ def template_csv() -> str:
     w = csv.writer(buf)
     w.writerow(HEADER)
     # 7am: breast 60 (L29/R31, before 5000g) + bottle 30ml formula + pee + vitamin D
-    w.writerow(["2026-11-01", "07:00", "60", "29", "31", "5000", "", "", "30", "0", "", "YES", "", "", "", "Vitamin D"])
+    w.writerow(["2026-11-01", "07:00", "60", "29", "31", "5000", "", "", "30", "0", "", "Y", "", "", "", "Vitamin D"])
     # 11:30am: 2.5h sleep
     w.writerow(["2026-11-01", "11:30", "", "", "", "", "", "", "", "", "2.5", "", "", "", "", ""])
     # 2pm: poop, size M, watery 2
-    w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "YES", "M", "2", ""])
+    w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "Y", "M", "2", ""])
     # 3pm: pee only
-    w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "YES", "", "", "", ""])
+    w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "Y", "", "", "", ""])
     # 6pm: two supplements at one time (semicolon-separated)
     w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D; DHA"])
     return buf.getvalue()
