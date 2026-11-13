@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { logEvents } from "../api";
 import { defaultDateTime, formatMl } from "../dates";
-import { SUPPLEMENT_CHOICES, useLang } from "../i18n";
+import { supplementLabel, useLang } from "../i18n";
 import type { LogRequest, PoopSize } from "../types";
 
 interface Props {
@@ -13,6 +13,14 @@ interface Props {
 const num = (s: string): number | null => {
   const v = parseFloat(s);
   return s.trim() !== "" && !isNaN(v) ? v : null;
+};
+
+const SUPP_OPTIONS = ["Vitamin D", "Probiotic", "Iron", "Vitamin C"];
+const SUPP_EMOJI: Record<string, string> = {
+  "Vitamin D": "☀️",
+  "Probiotic": "🦠",
+  "Iron": "🔩",
+  "Vitamin C": "🍊",
 };
 
 export function LogForm({ date, onSubmit, onCancel }: Props) {
@@ -35,8 +43,9 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   const [poop, setPoop] = useState(false);
   const [poopSize, setPoopSize] = useState<PoopSize>("M");
   const [poopWatery, setPoopWatery] = useState("2");
-  // supplement
-  const [supp, setSupp] = useState("");
+  // supplements (multiple allowed)
+  const [suppSelected, setSuppSelected] = useState<string[]>([]);
+  const [suppOther, setSuppOther] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -48,8 +57,15 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   const hasBottle = num(formulaMl) != null || num(bottleBreastMl) != null;
   const hasSleep = num(sleepHours) != null;
 
+  const suppList = [...suppSelected];
+  if (suppOther.trim()) suppList.push(suppOther.trim());
+
+  function toggleSupp(name: string) {
+    setSuppSelected((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
+  }
+
   async function submit() {
-    if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !supp) {
+    if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !suppList.length) {
       setError(t("log.needSomething"));
       return;
     }
@@ -76,7 +92,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
       req.poopSize = poopSize;
       req.poopWatery = parseInt(poopWatery, 10) || 2;
     }
-    if (supp) req.supplements = [supp];
+    if (suppList.length) req.supplements = suppList;
     setSaving(true);
     setError(null);
     try {
@@ -99,7 +115,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     if (hasSleep) items.push(`${t("item.sleep")} ${num(sleepHours) ?? 0}h`);
     if (pee) items.push(t("item.pee"));
     if (poop) items.push(t("item.poop"));
-    if (supp) items.push(supp);
+    if (suppList.length) items.push(suppList.map((n) => supplementLabel(n, t)).join(", "));
     return items.length ? items : [t("log.nothing")];
   }
 
@@ -177,16 +193,18 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
       </div>
 
       <div className="log-section">
-        <label className="log-check">
-          <input type="checkbox" checked={pee} onChange={(e) => setPee(e.target.checked)} />
-          <span className="log-emoji">💧</span>
-          <span>{t("log.pee")}</span>
-        </label>
-        <label className="log-check">
-          <input type="checkbox" checked={poop} onChange={(e) => setPoop(e.target.checked)} />
-          <span className="log-emoji">💩</span>
-          <span>{t("log.poop")}</span>
-        </label>
+        <div className="log-toggles">
+          <button type="button" className={`toggle-chip${pee ? " active" : ""}`} onClick={() => setPee(!pee)}>
+            <span className="log-emoji">💧</span>
+            <span>{t("log.pee")}</span>
+            {pee && <span className="chip-check">✓</span>}
+          </button>
+          <button type="button" className={`toggle-chip${poop ? " active" : ""}`} onClick={() => setPoop(!poop)}>
+            <span className="log-emoji">💩</span>
+            <span>{t("log.poop")}</span>
+            {poop && <span className="chip-check">✓</span>}
+          </button>
+        </div>
         {poop && (
           <div className="row-2">
             <label className="field">
@@ -214,14 +232,23 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
           <span className="log-emoji">💊</span>
           <span>{t("log.supplement")}</span>
         </div>
+        <div className="log-toggles">
+          {SUPP_OPTIONS.map((name) => (
+            <button
+              type="button"
+              key={name}
+              className={`toggle-chip${suppSelected.includes(name) ? " active" : ""}`}
+              onClick={() => toggleSupp(name)}
+            >
+              <span className="log-emoji">{SUPP_EMOJI[name]}</span>
+              <span>{supplementLabel(name, t)}</span>
+              {suppSelected.includes(name) && <span className="chip-check">✓</span>}
+            </button>
+          ))}
+        </div>
         <label className="field">
-          <span>{t("supp.name")}</span>
-          <select value={supp} onChange={(e) => setSupp(e.target.value)}>
-            <option value="">{t("supp.choose")}</option>
-            {SUPPLEMENT_CHOICES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <span>{t("supp.other")}</span>
+          <input type="text" value={suppOther} onChange={(e) => setSuppOther(e.target.value)} placeholder={t("supp.otherPlaceholder")} />
         </label>
       </div>
 
