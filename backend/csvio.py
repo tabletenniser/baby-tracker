@@ -16,8 +16,8 @@ Columns:
   - bottle_breast_ml : expressed breast milk in a bottle (ml).
   - sleep_hours      : a nap/sleep of this many hours ENDING at the row time.
   - pee / poop       : put YES (or y/1/x) to record a pee / poop at this time.
-  - poop_size        : S / M / L (default M).
-  - poop_watery      : 1 formed / 2 middle / 3 watery (default 2).
+  - poop_size        : S / M / L (optional, leave blank if not noted).
+  - poop_watery      : 1 formed / 2 middle / 3 watery (optional, leave blank if not noted).
   - supplement       : name(s), e.g. "Vitamin D" or "Vitamin D; DHA" (semicolon-separate several).
 
 Example — 7am with a breast feed + bottle + pee + vitamin D in ONE row:
@@ -198,7 +198,7 @@ def _new_group():
         "before_weight": 0.0, "left_time": "", "right_time": "",
         "formula_ml": 0.0, "bottle_breast_ml": 0.0,
         "sleep_hours": 0.0, "pee": False, "poop": False,
-        "poop_size": "", "poop_watery": 2, "supplements": [],
+        "poop_size": "", "poop_watery": "", "supplements": [],
     }
 
 
@@ -226,8 +226,8 @@ def _merge_into_group(g, kind, obj):
     elif kind == "elim":
         if obj.get("type") == "poop":
             g["poop"] = True
-            g["poop_size"] = obj.get("size", "M")
-            g["poop_watery"] = obj.get("watery", 2)
+            g["poop_size"] = obj.get("size") or ""
+            g["poop_watery"] = obj.get("watery") or ""
         else:
             g["pee"] = True
     elif kind == "supp":
@@ -370,13 +370,18 @@ def _import_new_row(imp, row, i):
 
     # poop
     if _is_yes(row.get("poop")):
-        size = (row.get("poop_size") or row.get("size") or "M").strip().upper()
-        rec = {"datetime": dt, "type": "poop", "size": size if size in ("S", "M", "L") else "M"}
-        try:
-            watery = int(_num(row.get("poop_watery") or row.get("watery"), default=2))
-            rec["watery"] = watery if watery in (1, 2, 3) else 2
-        except (TypeError, ValueError):
-            rec["watery"] = 2
+        size = (row.get("poop_size") or row.get("size") or "").strip().upper()
+        rec = {"datetime": dt, "type": "poop"}
+        if size in ("S", "M", "L"):
+            rec["size"] = size
+        watery_raw = row.get("poop_watery") or row.get("watery")
+        if watery_raw not in (None, ""):
+            try:
+                watery = int(_num(watery_raw, default=0))
+                if watery in (1, 2, 3):
+                    rec["watery"] = watery
+            except (TypeError, ValueError):
+                pass
         imp.add("eliminations", rec)
 
     # supplement(s)
@@ -426,13 +431,16 @@ def _import_old_row(imp, row, i):
     elif raw_type in ("pee", "poop"):
         rec = {"datetime": dt, "type": raw_type}
         if raw_type == "poop":
-            size = (row.get("size") or "M").strip().upper()
-            rec["size"] = size if size in ("S", "M", "L") else "M"
-            try:
-                watery = int(_num(row.get("watery"), default=2))
-                rec["watery"] = watery if watery in (1, 2, 3) else 2
-            except (TypeError, ValueError):
-                rec["watery"] = 2
+            size = (row.get("size") or "").strip().upper()
+            if size in ("S", "M", "L"):
+                rec["size"] = size
+            if row.get("watery") not in (None, ""):
+                try:
+                    watery = int(_num(row.get("watery"), default=0))
+                    if watery in (1, 2, 3):
+                        rec["watery"] = watery
+                except (TypeError, ValueError):
+                    pass
         imp.add("eliminations", rec)
     elif raw_type == "supplement":
         name = (row.get("supplement") or "").strip()

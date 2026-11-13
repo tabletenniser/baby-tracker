@@ -87,15 +87,24 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
     });
   }
   for (const e of data.eliminations) {
-    const wateryLabel =
-      e.watery === 1 ? t("elim.formed") : e.watery === 3 ? t("elim.wateryLevel") : t("elim.middle");
+    let detail: string | undefined;
+    if (e.type === "poop") {
+      const parts: string[] = [];
+      if (e.size) parts.push(`${t("item.size")} ${e.size}`);
+      if (e.watery != null) {
+        const wateryLabel =
+          e.watery === 1 ? t("elim.formed") : e.watery === 3 ? t("elim.wateryLevel") : t("elim.middle");
+        parts.push(`${t("item.watery")}: ${wateryLabel}`);
+      }
+      detail = parts.join(" · ") || undefined;
+    }
     items.push({
       key: `e-${e.id}`,
       sortTime: e.datetime,
       displayTime: timeOf(e.datetime),
       icon: e.type === "pee" ? "💧" : "💩",
       title: e.type === "pee" ? t("item.pee") : t("item.poop"),
-      detail: e.type === "poop" ? `${t("item.size")} ${e.size} · ${t("item.watery")}: ${wateryLabel}` : undefined,
+      detail,
       kind: "elimination",
       id: e.id,
     });

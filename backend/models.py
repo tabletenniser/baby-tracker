@@ -67,14 +67,14 @@ class Sleep(SleepCreate):
 class EliminationCreate(BaseModel):
     datetime: str
     type: ElimType
-    size: Optional[PoopSize] = None  # poop only, default M
-    watery: Optional[WateryLevel] = None  # poop only, default 2 (middle)
+    size: Optional[PoopSize] = None  # poop only, optional
+    watery: Optional[WateryLevel] = None  # poop only, optional
 
 
 class Elimination(EliminationCreate):
     id: str
-    size: PoopSize = "M"
-    watery: WateryLevel = 2
+    size: Optional[PoopSize] = None  # poop only, optional
+    watery: Optional[WateryLevel] = None  # poop only, optional
 
 
 class VitaminD(BaseModel):

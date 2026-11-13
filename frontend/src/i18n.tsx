@@ -113,6 +113,7 @@ const en: Record<string, string> = {
   "elim.formed": "Formed",
   "elim.middle": "Middle",
   "elim.wateryLevel": "Watery",
+  "elim.notSet": "—",
 
   "supp.add": "Add supplement",
   "supp.edit": "Edit supplement",
@@ -322,6 +323,7 @@ const zh: Record<string, string> = {
   "elim.formed": "成形",
   "elim.middle": "中等",
   "elim.wateryLevel": "稀",
+  "elim.notSet": "—",
 
   "supp.add": "添加补充剂",
   "supp.edit": "编辑补充剂",
