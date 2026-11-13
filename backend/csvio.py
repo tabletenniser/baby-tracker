@@ -18,7 +18,7 @@ Columns:
   - pee / poop       : put YES (or y/1/x) to record a pee / poop at this time.
   - poop_size        : S / M / L (default M).
   - poop_watery      : 1 formed / 2 middle / 3 watery (default 2).
-  - supplement       : name, e.g. "Vitamin D" (comma-separate several).
+  - supplement       : name(s), e.g. "Vitamin D" or "Vitamin D; DHA" (semicolon-separate several).
 
 Example — 7am with a breast feed + bottle + pee + vitamin D in ONE row:
     2026-11-01,07:00,60,29,31,5000,,,30,0,,YES,,,Vitamin D
@@ -28,6 +28,7 @@ for backward compatibility.
 """
 import csv
 import io
+import re
 from datetime import datetime, date, time
 
 from main import feeding_breast, sleep_view, build_breast_weights
@@ -251,7 +252,7 @@ def _group_row(g, d, t):
         "YES" if g["poop"] else "",
         g["poop_size"] if g["poop"] else "",
         g["poop_watery"] if g["poop"] else "",
-        ", ".join(g["supplements"]),
+        "; ".join(g["supplements"]),
     ]
 
 
@@ -304,8 +305,8 @@ def template_csv() -> str:
     w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "YES", "M", "2", ""])
     # 3pm: pee only
     w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "YES", "", "", "", ""])
-    # 6pm: supplement only
-    w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D"])
+    # 6pm: two supplements at one time (semicolon-separated)
+    w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D; DHA"])
     return buf.getvalue()
 
 
@@ -381,7 +382,8 @@ def _import_new_row(imp, row, i):
     # supplement(s)
     name = (row.get("supplement") or "").strip()
     if name:
-        for part in name.split(","):
+        # Semicolon is the preferred separator; comma is also accepted (legacy).
+        for part in re.split(r"[;,]", name):
             part = part.strip()
             if part:
                 imp.add("supplements", {"name": part, "datetime": dt})
