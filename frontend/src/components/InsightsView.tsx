@@ -34,7 +34,7 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis yAxisId="ml" tick={{ fontSize: 11 }} />
             <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} width={38} />
@@ -44,9 +44,9 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
               }
             />
             <Legend />
-            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#ff7aa2" name={t("insights.breast")} />
+            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#f5a623" name={t("insights.breast")} />
             <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} />
-            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#e33b6a" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} />
+            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#c98a00" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -78,13 +78,13 @@ function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
             <Legend />
-            <Bar dataKey="left" stackId="a" fill="#ff7aa2" name={t("insights.left")} />
-            <Bar dataKey="right" stackId="a" fill="#f0b8d0" name={t("insights.right")} />
+            <Bar dataKey="left" stackId="a" fill="#f5a623" name={t("insights.left")} />
+            <Bar dataKey="right" stackId="a" fill="#ffd98a" name={t("insights.right")} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -106,7 +106,7 @@ function SleepChart({ data }: { data: HourPoint[] }) {
                 <stop offset="95%" stopColor="#6aa9ff" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => formatHours(Number(v), lang)} />
@@ -126,7 +126,7 @@ function PoopChart({ data }: { data: CountPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e2e8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />

@@ -92,7 +92,7 @@ export function FeedingTrend() {
                 label={{ value: t("trend.avg7"), position: "insideBottomRight", fontSize: 10, fill: "#b45309" }}
               />
             )}
-            <Bar dataKey="total" fill="#f9a8d4" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="#ffd98a" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
