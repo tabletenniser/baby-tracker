@@ -199,7 +199,7 @@ def export_csv(data: dict) -> str:
     for s in sorted(data.get("sleeps", []), key=lambda s: s.get("endTime", "")):
         view = sleep_view(s)
         d, t = _split_dt(view["end"])
-        w.writerow([d, t, "sleep", "", "", "", "", "", "", "", round(view["hours"], 2), "", "", "", ""])
+        w.writerow([d, t, "sleep", "", "", "", "", "", "", "", "", round(view["hours"], 2), "", "", ""])
 
     for e in sorted(data.get("eliminations", []), key=lambda e: e.get("datetime", "")):
         d, t = _split_dt(e.get("datetime", ""))
@@ -223,9 +223,9 @@ def template_csv() -> str:
     # breast: total 60 = left 29 + right 31, before weight 5000g, left done 08:07, right 08:20
     w.writerow(["2026-11-01", "08:00", "breast", "60", "29", "31", "5000", "08:07", "08:20", "", "", "", "", "", ""])
     # bottle: 30ml formula
-    w.writerow(["2026-11-01", "02:18", "bottle", "", "", "", "", "", "30", "0", "", "", "", "", ""])
-    w.writerow(["2026-11-01", "11:30", "sleep", "", "", "", "", "", "", "", "2.5", "", "", "", ""])
-    w.writerow(["2026-11-01", "14:00", "poop", "", "", "", "", "", "", "", "", "M", "2", "", ""])
+    w.writerow(["2026-11-01", "02:18", "bottle", "", "", "", "", "", "", "30", "0", "", "", "", ""])
+    w.writerow(["2026-11-01", "11:30", "sleep", "", "", "", "", "", "", "", "", "2.5", "", "", ""])
+    w.writerow(["2026-11-01", "14:00", "poop", "", "", "", "", "", "", "", "", "", "M", "2", ""])
     w.writerow(["2026-11-01", "15:00", "pee", "", "", "", "", "", "", "", "", "", "", "", ""])
     w.writerow(["2026-11-01", "18:00", "supplement", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D"])
     return buf.getvalue()
