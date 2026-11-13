@@ -83,7 +83,6 @@ h2 {
 
 /* ------------------------------------------------------------------ App */
 .app {
-  max-width: 640px;
   margin: 0 auto;
   padding: 0 12px calc(24px + env(safe-area-inset-bottom));
 }
@@ -513,7 +512,6 @@ input[type="number"] {
 /* ------------------------------------------------- Larger screens (iPad+) */
 @media (min-width: 600px) {
   .app {
-    max-width: 720px;
     padding: 0 20px 40px;
   }
   .summary-grid {
@@ -527,12 +525,9 @@ input[type="number"] {
   }
 }
 
-@media (min-width: 900px) {
-  .summary-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-  }
+@media (min-width: 1200px) {
   .app {
-    max-width: 860px;
+    max-width: 900px;
   }
 }
 
@@ -576,16 +571,41 @@ input[type="number"] {
 /* ------------------------------------------------------------- Add bar */
 .add-bar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 .add-btn {
   background: #fff;
   border: 1px solid var(--line);
   color: var(--ink);
-  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  min-height: 56px;
   text-align: center;
+}
+.add-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.add-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 480px) {
+  .add-emoji {
+    font-size: 1.15rem;
+  }
+  .add-label {
+    font-size: 0.68rem;
+  }
 }
 
 /* ------------------------------------------------------------- Timeline */
@@ -853,8 +873,5 @@ input[type="number"] {
   }
   .modal {
     border-radius: 20px;
-  }
-  .add-bar {
-    grid-template-columns: repeat(4, 1fr);
   }
 }
