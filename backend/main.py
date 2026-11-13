@@ -720,7 +720,7 @@ def log_events(req: LogRequest):
             eid = store.new_id()
             data["eliminations"].append({
                 "id": eid, "datetime": dt, "type": "poop",
-                "size": req.poopSize or "M", "watery": req.poopWatery or 2,
+                "size": req.poopSize, "watery": req.poopWatery,
             })
             created["eliminations"].append(eid)
         # supplements

@@ -16,8 +16,8 @@ export function EliminationForm({ date, initial, initialType, onSubmit, onCancel
   const { t } = useLang();
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
   const [type, setType] = useState<ElimType>(initial?.type ?? initialType ?? "pee");
-  const [size, setSize] = useState<PoopSize>(initial?.size ?? "M");
-  const [watery, setWatery] = useState<number>(initial?.watery ?? 2);
+  const [size, setSize] = useState<PoopSize | "">(initial?.size ?? "");
+  const [watery, setWatery] = useState<string>(initial?.watery != null ? String(initial.watery) : "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -28,8 +28,8 @@ export function EliminationForm({ date, initial, initialType, onSubmit, onCancel
     }
     const input: EliminationInput = { datetime, type };
     if (type === "poop") {
-      input.size = size;
-      input.watery = watery;
+      if (size) input.size = size;
+      if (watery) input.watery = parseInt(watery, 10);
     }
     setSaving(true);
     setError(null);
@@ -77,7 +77,8 @@ export function EliminationForm({ date, initial, initialType, onSubmit, onCancel
           <div className="row-2">
             <label className="field">
               <span>{t("elim.size")}</span>
-              <select value={size} onChange={(e) => setSize(e.target.value as PoopSize)}>
+              <select value={size} onChange={(e) => setSize(e.target.value as PoopSize | "")}>
+                <option value="">{t("elim.notSet")}</option>
                 <option value="S">S</option>
                 <option value="M">M</option>
                 <option value="L">L</option>
@@ -85,7 +86,8 @@ export function EliminationForm({ date, initial, initialType, onSubmit, onCancel
             </label>
             <label className="field">
               <span>{t("elim.watery")}</span>
-              <select value={watery} onChange={(e) => setWatery(Number(e.target.value))}>
+              <select value={watery} onChange={(e) => setWatery(e.target.value)}>
+                <option value="">{t("elim.notSet")}</option>
                 <option value={1}>{t("elim.formed")}</option>
                 <option value={2}>{t("elim.middle")}</option>
                 <option value={3}>{t("elim.wateryLevel")}</option>
@@ -93,8 +95,8 @@ export function EliminationForm({ date, initial, initialType, onSubmit, onCancel
             </label>
           </div>
           <div className="preview">
-            {t("item.size")} <b>{size}</b> · {t("item.watery")}:{" "}
-            {watery === 1 ? t("elim.formed") : watery === 3 ? t("elim.wateryLevel") : t("elim.middle")}
+            {t("item.size")} <b>{size || t("elim.notSet")}</b> · {t("item.watery")}:{" "}
+            {watery === "1" ? t("elim.formed") : watery === "2" ? t("elim.middle") : watery === "3" ? t("elim.wateryLevel") : t("elim.notSet")}
           </div>
         </>
       )}

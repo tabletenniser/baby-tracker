@@ -41,8 +41,8 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   // pee / poop
   const [pee, setPee] = useState(false);
   const [poop, setPoop] = useState(false);
-  const [poopSize, setPoopSize] = useState<PoopSize>("M");
-  const [poopWatery, setPoopWatery] = useState("2");
+  const [poopSize, setPoopSize] = useState<PoopSize | "">("");
+  const [poopWatery, setPoopWatery] = useState("");
   // supplements (multiple allowed)
   const [suppSelected, setSuppSelected] = useState<string[]>([]);
   const [suppOther, setSuppOther] = useState("");
@@ -89,8 +89,8 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     if (pee) req.pee = true;
     if (poop) {
       req.poop = true;
-      req.poopSize = poopSize;
-      req.poopWatery = parseInt(poopWatery, 10) || 2;
+      if (poopSize) req.poopSize = poopSize;
+      if (poopWatery) req.poopWatery = parseInt(poopWatery, 10);
     }
     if (suppList.length) req.supplements = suppList;
     setSaving(true);
@@ -209,7 +209,8 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
           <div className="row-2">
             <label className="field">
               <span>{t("elim.size")}</span>
-              <select value={poopSize} onChange={(e) => setPoopSize(e.target.value as PoopSize)}>
+              <select value={poopSize} onChange={(e) => setPoopSize(e.target.value as PoopSize | "")}>
+                <option value="">{t("elim.notSet")}</option>
                 <option value="S">S</option>
                 <option value="M">M</option>
                 <option value="L">L</option>
@@ -218,6 +219,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
             <label className="field">
               <span>{t("elim.watery")}</span>
               <select value={poopWatery} onChange={(e) => setPoopWatery(e.target.value)}>
+                <option value="">{t("elim.notSet")}</option>
                 <option value="1">{t("elim.formed")}</option>
                 <option value="2">{t("elim.middle")}</option>
                 <option value="3">{t("elim.wateryLevel")}</option>
