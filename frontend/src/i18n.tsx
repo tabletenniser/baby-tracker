@@ -22,10 +22,12 @@ const en: Record<string, string> = {
   "summary.supplements": "💊 Supplements",
 
   "timeline.today": "Today",
-  "add.feeding": "🤱 Feeding",
-  "add.sleep": "😴 Sleep",
-  "add.elim": "💧 Pee/Poop",
-  "add.supplement": "💊 Supplement",
+  "add.breast": "Breast",
+  "add.bottle": "Bottle",
+  "add.sleep": "Sleep",
+  "add.pee": "Pee",
+  "add.poop": "Poop",
+  "add.supplement": "Supplement",
 
   "item.breast": "Breast",
   "item.beforeOnly": "before weight only",
@@ -209,10 +211,12 @@ const zh: Record<string, string> = {
   "summary.supplements": "💊 补充剂",
 
   "timeline.today": "今天",
-  "add.feeding": "🤱 喂奶",
-  "add.sleep": "😴 睡眠",
-  "add.elim": "💧 大小便",
-  "add.supplement": "💊 补充剂",
+  "add.breast": "亲喂",
+  "add.bottle": "瓶喂",
+  "add.sleep": "睡眠",
+  "add.pee": "小便",
+  "add.poop": "大便",
+  "add.supplement": "补充剂",
 
   "item.breast": "母乳",
   "item.beforeOnly": "仅喂奶前体重",

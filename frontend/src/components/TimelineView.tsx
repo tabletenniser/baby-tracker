@@ -10,7 +10,9 @@ import { formatHours, formatMins, formatMl, shortDate, timeOf, todayStr } from "
 import { supplementLabel, useLang } from "../i18n";
 import type {
   Elimination,
+  ElimType,
   Feeding,
+  FeedingType,
   Sleep,
   Supplement,
   TimelineData,
@@ -125,6 +127,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
   const [editSleep, setEditSleep] = useState<Sleep | null>(null);
   const [editElim, setEditElim] = useState<Elimination | null>(null);
   const [editSupp, setEditSupp] = useState<Supplement | null>(null);
+  const [addType, setAddType] = useState<FeedingType | ElimType | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -143,6 +146,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditSleep(null);
     setEditElim(null);
     setEditSupp(null);
+    setAddType(null);
     (async () => {
       try {
         const d = await getTimeline(date);
@@ -156,11 +160,12 @@ export function TimelineView({ date, refreshSignal }: Props) {
     };
   }, [date, refreshSignal]);
 
-  function openAdd(kind: Kind) {
+  function openAdd(kind: Kind, addType?: FeedingType | ElimType) {
     setEditFeeding(null);
     setEditSleep(null);
     setEditElim(null);
     setEditSupp(null);
+    setAddType(addType ?? null);
     setModal(kind);
   }
 
@@ -180,6 +185,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditSleep(null);
     setEditElim(null);
     setEditSupp(null);
+    setAddType(null);
   }
 
   async function handleDelete(item: Item) {
@@ -202,17 +208,29 @@ export function TimelineView({ date, refreshSignal }: Props) {
       {data && <DailySummaryCard daily={data.daily} />}
 
       <div className="add-bar">
-        <button className="btn add-btn" onClick={() => openAdd("feeding")}>
-          {t("add.feeding")}
+        <button className="btn add-btn" onClick={() => openAdd("feeding", "breast")}>
+          <span className="add-emoji">🤱</span>
+          <span className="add-label">{t("add.breast")}</span>
+        </button>
+        <button className="btn add-btn" onClick={() => openAdd("feeding", "bottle")}>
+          <span className="add-emoji">🍼</span>
+          <span className="add-label">{t("add.bottle")}</span>
         </button>
         <button className="btn add-btn" onClick={() => openAdd("sleep")}>
-          {t("add.sleep")}
+          <span className="add-emoji">😴</span>
+          <span className="add-label">{t("add.sleep")}</span>
         </button>
-        <button className="btn add-btn" onClick={() => openAdd("elimination")}>
-          {t("add.elim")}
+        <button className="btn add-btn" onClick={() => openAdd("elimination", "pee")}>
+          <span className="add-emoji">💧</span>
+          <span className="add-label">{t("add.pee")}</span>
+        </button>
+        <button className="btn add-btn" onClick={() => openAdd("elimination", "poop")}>
+          <span className="add-emoji">💩</span>
+          <span className="add-label">{t("add.poop")}</span>
         </button>
         <button className="btn add-btn" onClick={() => openAdd("supplement")}>
-          {t("add.supplement")}
+          <span className="add-emoji">💊</span>
+          <span className="add-label">{t("add.supplement")}</span>
         </button>
       </div>
 
@@ -258,6 +276,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
             key={editFeeding?.id ?? "new"}
             date={date}
             initial={editFeeding}
+            initialType={addType as FeedingType | undefined}
             onSubmit={async () => {
               closeModal();
               await refresh();
@@ -286,6 +305,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
             key={editElim?.id ?? "new"}
             date={date}
             initial={editElim}
+            initialType={addType as ElimType | undefined}
             onSubmit={async () => {
               closeModal();
               await refresh();
