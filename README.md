@@ -36,27 +36,30 @@ Two tabs:
 
 ### 📥 Import / Export (CSV)
 - The **📥** button in the top bar opens an import/export dialog.
-- **Export** — download all feedings, sleeps, pee/poop, and supplements as a flat CSV (one row per event, with a `type` column).
-- **Template** — download a small template CSV showing one example of each row type. Open it in **Google Sheets**, type your historical rows, export as CSV, then import it here.
+- **Export** — download all feedings, sleeps, pee/poop, and supplements as a flat CSV. **One row per timestamp**: if several things happened at the same time, they share a single row.
+- **Template** — download a small template CSV. Open it in **Google Sheets**, type your historical rows, export as CSV, then import it here.
 - **Import** — upload a CSV. Check **"Replace existing data"** first if you want to wipe feedings/sleeps/pee-poop/supplements before importing. A summary shows how many rows were imported and any rows that were skipped (with the reason).
-- Only the columns you need are filled in per row — the layout is designed to be quick to type in a spreadsheet:
+- The layout is **concise**: there is **no `type` column** — the event is inferred from which columns you fill. `pee` and `poop` are recorded with `YES`. Only the columns you need are filled per row:
 
   ```
-  date,time,type,amount_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,breast_ml,duration_hours,size,watery,supplement
-  2026-11-01,08:00,breast,60,29,31,5000,08:07,08:20,,,,,,
-  2026-11-01,02:18,bottle,,,,,,,30,0,,,,
-  2026-11-01,11:30,sleep,,,,,,,,,2.5,,,
-  2026-11-01,14:00,poop,,,,,,,,,,M,2,
-  2026-11-01,15:00,pee,,,,,,,,,,,,
-  2026-11-01,18:00,supplement,,,,,,,,,,,,Vitamin D
+  date,time,breast_ml,left_ml,right_ml,before_weight,left_time,right_time,formula_ml,bottle_breast_ml,sleep_hours,pee,poop,poop_size,poop_watery,supplement
+  2026-11-01,07:00,60,29,31,5000,,,30,0,,YES,,,,Vitamin D
+  2026-11-01,11:30,,,,,,,,,2.5,,,,,
+  2026-11-01,14:00,,,,,,,,,,,YES,M,2,
+  2026-11-01,15:00,,,,,,,,,,YES,,,,
+  2026-11-01,18:00,,,,,,,,,,,,,,Vitamin D
   ```
 
-  - **Date and time are separate columns** so you can copy a date down a column and just fill in each `time`. A blank `time` defaults to noon (12:00). Row order does not matter — each row is an independent event and the app sorts by date/time.
-  - `type`: `breast` · `bottle` · `sleep` (`time` = end time, `duration_hours`) · `pee` · `poop` (`size` S/M/L, `watery` 1/2/3) · `supplement` (name)
-  - **Breast** — fill `left_ml` + `right_ml` + `before_weight` to preserve the full per-breast split and the growth-chart "before" weight (`amount_ml` = the total). Optional `left_time` / `right_time` (HH:MM) record when each side's weight was taken, so the app can show how long each breast took. Or just fill `amount_ml` for a quick total-only entry (attributed to the left breast), or leave it empty for a "before weight only" entry you can complete later.
-  - **Bottle** — `formula_ml` and/or `breast_ml` (breast milk given by bottle); `amount_ml` is used as the formula amount if `formula_ml` is left empty.
-  - Dates accept `YYYY-MM-DD`, `YYYY/MM/DD`, `M/D/YYYY`, `D/M/YYYY`; times accept `HH:MM`, `HH:MM:SS`, `h:MM AM/PM`. An older combined `datetime` column is still accepted on import.
-  - Export preserves all of this, so **export → edit in Sheets → import** round-trips without losing the left/right split or weights.
+  - **Date and time are separate columns** so you can copy a date down a column and just fill in each `time`. A blank `time` defaults to noon (12:00). Row order does not matter — the app sorts by date/time.
+  - **Multiple events in one row** — the 07:00 row above is a breast feed + a bottle + a pee + a supplement all at once.
+  - **Breast** — `breast_ml` is the total. If you know the split, fill `left_ml` + `right_ml` (leave `breast_ml` blank or fill it — the split takes priority). If you don't know which breast, leave `left_ml`/`right_ml` empty and put the total in `breast_ml`. `before_weight` is the growth-chart weight; optional `left_time` / `right_time` (HH:MM) record when each side's weight was taken (per-breast duration). A `before_weight`-only row gives a "before weight only" entry you can complete later.
+  - **Bottle** — `formula_ml` and/or `bottle_breast_ml` (breast milk given by bottle).
+  - **Sleep** — `sleep_hours` is a nap of that many hours ending at `time`.
+  - **Pee / Poop** — put `YES` in the column; for poop add `poop_size` (S/M/L, default M) and `poop_watery` (1/2/3, default 2).
+  - **Supplement** — the name; separate several with commas.
+  - Dates accept `YYYY-MM-DD`, `YYYY/MM/DD`, `M/D/YYYY`, `D/M/YYYY`; times accept `HH:MM`, `HH:MM:SS`, `h:MM AM/PM`.
+  - **Backward compatible** — older CSVs with a `type` column (one event per row) still import fine.
+  - Export preserves all of this, so **export → edit in Sheets → import** round-trips without losing the left/right split, weights, or times.
 
 ### Entry details
 - **First-run setup** — asks for the baby's name, birthday, and sex.
@@ -67,6 +70,7 @@ Two tabs:
 - **Sleep** — log by *duration + end time* (the default) **or** *start + end time*.
 - **Pee & Poop** — track each event; for poop, record **size** (S/M/L, default M) and **watery** (Formed / Middle / Watery, default Middle).
 - **Supplements** — pick from a list (Vitamin D, Probiotic, Iron, Vitamin C) or enter a custom name, with a timestamp.
+- **Log at a time** — the **⏱️ Log at a time** button opens one form to record everything that happened at a single timestamp: breast (total and/or left+right), bottle, a sleep nap, pee, poop (size + watery), and a supplement. Fill in only what applies and hit **Save all** — each filled item is logged at that same time. Great for a quick all-in-one entry.
 - **Persistence** — data is saved to disk on every change, so restarting the server never loses anything.
 
 ## Quick start
@@ -128,4 +132,5 @@ the server. Back up that file to back up your data.
 | GET | `/api/export.csv` | Download all data as a flat CSV |
 | GET | `/api/template.csv` | Download a small CSV template (one example row per type) |
 | POST | `/api/import?clear=` | Import a CSV body (`clear=true` wipes feedings/sleeps/pee-poop/supplements first) |
+| POST | `/api/log` | Log several events (breast/bottle/sleep/pee/poop/supplement) at one timestamp |
 | GET | `/api/growth` | Weight points + WHO percentile curves + latest percentile |

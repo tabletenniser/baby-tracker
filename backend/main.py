@@ -5,11 +5,12 @@ every other path. Run with:  uvicorn main:app --host 0.0.0.0 --port 8000
 """
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
+from pydantic import BaseModel
 
 import store
 from models import (
@@ -18,9 +19,11 @@ from models import (
     DayCutoffSet,
     EliminationCreate,
     FeedingCreate,
+    PoopSize,
     SleepCreate,
     SupplementCreate,
     VitaminD,
+    WateryLevel,
     WeightEntry,
 )
 
@@ -120,30 +123,33 @@ def date_range(start: str, end: str):
 
 
 def compute_breast(weights):
-    """Return (left, right) ml from a sequence of weights.
+    """Return (left, right, total) ml from a sequence of weights.
 
-    Each weight after the first contributes a delta (weight[i] - weight[i-1])
-    attributed to that entry's side (left/right). N/A deltas are ignored.
+    Each weight after the first contributes a delta (weight[i] - weight[i-1]).
+    `total` is the sum of all positive deltas; `left`/`right` only count deltas
+    whose entry side is left/right. N/A deltas count toward total only, so a
+    total-only feeding (unknown split) doesn't skew the left/right balance.
     """
-    left = right = 0.0
+    left = right = total = 0.0
     prev = None
     for w in weights:
         if prev is not None:
             delta = w.weight - prev
             if delta > 0:
+                total += delta
                 if w.side == "left":
                     left += delta
                 elif w.side == "right":
                     right += delta
         prev = w.weight
-    return left, right
+    return left, right, total
 
 
 def feeding_breast(f):
     """Return (total_breast_ml, left_ml, right_ml) for a feeding record."""
     if f.get("type") == "breast" and f.get("weights"):
-        left, right = compute_breast([WeightEntry(**w) for w in f["weights"]])
-        return left + right, left, right
+        left, right, total = compute_breast([WeightEntry(**w) for w in f["weights"]])
+        return total, left, right
     if f.get("type") == "bottle":
         return float(f.get("bottleBreastMl") or 0), 0.0, 0.0
     return 0.0, 0.0, 0.0
@@ -153,6 +159,43 @@ def feeding_formula(f):
     if f.get("type") == "bottle":
         return float(f.get("bottleFormulaMl") or 0)
     return 0.0
+
+
+def build_breast_weights(before, left, right, amount, left_time="", right_time=""):
+    """Build a weights[] list for a breast feeding from (before, left, right, total).
+
+    Prefers the full breakdown (before + left + right) so the per-breast split
+    and the growth-chart 'before' weight are preserved; falls back to a
+    total-only entry (unknown split, recorded as N/A so it doesn't skew the
+    left/right balance) or a before-only entry (0 ml, editable later).
+    Optional left_time/right_time (HH:MM) are attached to the matching entries
+    so per-breast durations survive a round-trip.
+    """
+    before = float(before or 0)
+    left = float(left or 0)
+    right = float(right or 0)
+    amount = float(amount or 0)
+    if left > 0 or right > 0:
+        weights = [{"weight": before, "side": "na"}]
+        if left > 0:
+            entry = {"weight": before + left, "side": "left"}
+            if left_time:
+                entry["time"] = left_time
+            weights.append(entry)
+        if right > 0:
+            entry = {"weight": before + left + right, "side": "right"}
+            if right_time:
+                entry["time"] = right_time
+            weights.append(entry)
+        return weights
+    if amount > 0:
+        base = before if before > 0 else 0
+        entry = {"weight": base + amount, "side": "na"}
+        if left_time:
+            entry["time"] = left_time
+        return [{"weight": base, "side": "na"}, entry]
+    # before-only feeding (0 ml) — editable later
+    return [{"weight": before if before > 0 else 0, "side": "na"}]
 
 
 def _weight_time_dt(start: datetime, hhmm: str):
@@ -607,6 +650,90 @@ def delete_supplement(sid: str):
 
     store.write(mut)
     return {"ok": True}
+
+
+class LogRequest(BaseModel):
+    """Log several events at one timestamp in a single request."""
+    datetime: str  # local ISO, e.g. 2026-11-01T07:00
+    # breast feeding (any of these present -> a breast feeding is logged)
+    breastMl: Optional[float] = None  # total (when the split is unknown)
+    leftMl: Optional[float] = None
+    rightMl: Optional[float] = None
+    beforeWeight: Optional[float] = None
+    leftTime: Optional[str] = None
+    rightTime: Optional[str] = None
+    # bottle feeding
+    formulaMl: Optional[float] = None
+    bottleBreastMl: Optional[float] = None
+    # sleep (a nap of this many hours ending at `datetime`)
+    sleepHours: Optional[float] = None
+    # pee / poop
+    pee: bool = False
+    poop: bool = False
+    poopSize: Optional[PoopSize] = "M"
+    poopWatery: Optional[WateryLevel] = 2
+    # supplements (names)
+    supplements: Optional[List[str]] = None
+
+
+@app.post("/api/log")
+def log_events(req: LogRequest):
+    """Create every event present in the request, all at `req.datetime`.
+
+    Returns the ids of the records created, grouped by kind.
+    """
+    created = {"feedings": [], "sleeps": [], "eliminations": [], "supplements": []}
+
+    def mut(data):
+        dt = req.datetime
+        # breast feeding
+        if req.breastMl or req.leftMl or req.rightMl or req.beforeWeight:
+            fid = store.new_id()
+            weights = build_breast_weights(
+                req.beforeWeight, req.leftMl, req.rightMl, req.breastMl,
+                req.leftTime or "", req.rightTime or "",
+            )
+            data["feedings"].append({"id": fid, "datetime": dt, "type": "breast", "weights": weights})
+            created["feedings"].append(fid)
+        # bottle feeding
+        if req.formulaMl or req.bottleBreastMl:
+            fid = store.new_id()
+            data["feedings"].append({
+                "id": fid, "datetime": dt, "type": "bottle",
+                "bottleFormulaMl": req.formulaMl or 0, "bottleBreastMl": req.bottleBreastMl or 0,
+            })
+            created["feedings"].append(fid)
+        # sleep
+        if req.sleepHours:
+            sid = store.new_id()
+            data["sleeps"].append({
+                "id": sid, "mode": "duration_end", "endTime": dt, "durationHours": req.sleepHours,
+            })
+            created["sleeps"].append(sid)
+        # pee
+        if req.pee:
+            eid = store.new_id()
+            data["eliminations"].append({"id": eid, "datetime": dt, "type": "pee"})
+            created["eliminations"].append(eid)
+        # poop
+        if req.poop:
+            eid = store.new_id()
+            data["eliminations"].append({
+                "id": eid, "datetime": dt, "type": "poop",
+                "size": req.poopSize or "M", "watery": req.poopWatery or 2,
+            })
+            created["eliminations"].append(eid)
+        # supplements
+        for name in (req.supplements or []):
+            name = (name or "").strip()
+            if not name:
+                continue
+            sid = store.new_id()
+            data["supplements"].append({"id": sid, "datetime": dt, "name": name})
+            created["supplements"].append(sid)
+
+    store.write(mut)
+    return {"ok": True, "created": created}
 
 
 # --------------------------------------------------------------------------- #

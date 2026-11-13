@@ -84,6 +84,25 @@ export interface EliminationInput {
   watery?: number | null;
 }
 
+/** One request to log several events at the same timestamp. */
+export interface LogRequest {
+  datetime: string;
+  breastMl?: number | null; // total (when the split is unknown)
+  leftMl?: number | null;
+  rightMl?: number | null;
+  beforeWeight?: number | null;
+  leftTime?: string | null;
+  rightTime?: string | null;
+  formulaMl?: number | null;
+  bottleBreastMl?: number | null;
+  sleepHours?: number | null;
+  pee?: boolean;
+  poop?: boolean;
+  poopSize?: PoopSize | null;
+  poopWatery?: number | null;
+  supplements?: string[];
+}
+
 export interface Supplement {
   id: string;
   name: string;
