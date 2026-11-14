@@ -22,8 +22,40 @@ import { GrowthChart } from "./GrowthChart";
 
 type Range = "7" | "14" | "31" | "custom";
 
+// Shared clickable-legend state: clicking a legend item hides/shows that series.
+function useToggleSeries() {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  function onLegendClick(e: any) {
+    const key = e?.dataKey ?? e?.value;
+    if (key == null) return;
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+  function formatter(value: any, entry: any) {
+    const key = entry?.dataKey ?? value;
+    const isHidden = hidden.has(key);
+    return (
+      <span
+        style={{
+          color: isHidden ? "#c9c2b0" : "#3d3420",
+          textDecoration: isHidden ? "line-through" : "none",
+          cursor: "pointer",
+        }}
+      >
+        {value}
+      </span>
+    );
+  }
+  return { hidden, onLegendClick, formatter };
+}
+
 function MilkChart({ data }: { data: MilkPoint[] }) {
   const { lang, t } = useLang();
+  const { hidden, onLegendClick, formatter } = useToggleSeries();
   const rows = data.map((d) => ({
     ...d,
     breastPct: d.total > 0 ? Math.round((d.breast / d.total) * 100) : null,
@@ -43,10 +75,10 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
                 name === t("insights.breastPct") ? `${v}%` : `${Math.round(Number(v))} ml`
               }
             />
-            <Legend />
-            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#f5a623" name={t("insights.breast")} />
-            <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} />
-            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#c98a00" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} />
+            <Legend onClick={onLegendClick} formatter={formatter} />
+            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#f5a623" name={t("insights.breast")} hide={hidden.has("breast")} />
+            <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} hide={hidden.has("formula")} />
+            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#c98a00" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} hide={hidden.has("breastPct")} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -56,6 +88,7 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
 
 function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
   const { lang, t } = useLang();
+  const { hidden, onLegendClick, formatter } = useToggleSeries();
   const leftTotal = data.reduce((s, d) => s + (d.left || 0), 0);
   const rightTotal = data.reduce((s, d) => s + (d.right || 0), 0);
   const grand = leftTotal + rightTotal;
@@ -82,9 +115,9 @@ function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
-            <Legend />
-            <Bar dataKey="left" stackId="a" fill="#f5a623" name={t("insights.left")} />
-            <Bar dataKey="right" stackId="a" fill="#ffd98a" name={t("insights.right")} />
+            <Legend onClick={onLegendClick} formatter={formatter} />
+            <Bar dataKey="left" stackId="a" fill="#f5a623" name={t("insights.left")} hide={hidden.has("left")} />
+            <Bar dataKey="right" stackId="a" fill="#ffd98a" name={t("insights.right")} hide={hidden.has("right")} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -94,6 +127,7 @@ function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
 
 function SleepChart({ data }: { data: HourPoint[] }) {
   const { lang, t } = useLang();
+  const { hidden, onLegendClick, formatter } = useToggleSeries();
   return (
     <section className="card">
       <h2 className="card-title">{t("insights.sleep")}</h2>
@@ -110,7 +144,8 @@ function SleepChart({ data }: { data: HourPoint[] }) {
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => formatHours(Number(v), lang)} />
-            <Area type="monotone" dataKey="hours" stroke="#6aa9ff" fill="url(#sleepGrad)" name={t("insights.sleep")} />
+            <Legend onClick={onLegendClick} formatter={formatter} />
+            <Area type="monotone" dataKey="hours" stroke="#6aa9ff" fill="url(#sleepGrad)" name={t("insights.sleep")} hide={hidden.has("hours")} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -118,19 +153,27 @@ function SleepChart({ data }: { data: HourPoint[] }) {
   );
 }
 
-function PoopChart({ data }: { data: CountPoint[] }) {
+function EliminationChart({ pee, poop }: { pee: CountPoint[]; poop: CountPoint[] }) {
   const { lang, t } = useLang();
+  const { hidden, onLegendClick, formatter } = useToggleSeries();
+  const rows = poop.map((p, i) => ({
+    date: p.date,
+    poop: p.count,
+    pee: pee[i]?.count ?? 0,
+  }));
   return (
     <section className="card">
-      <h2 className="card-title">{t("insights.poop")}</h2>
+      <h2 className="card-title">{t("insights.elim")}</h2>
       <div className="chart">
         <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
+          <BarChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="count" fill="#c9a227" name={t("insights.poop")} radius={[4, 4, 0, 0]} />
+            <Legend onClick={onLegendClick} formatter={formatter} />
+            <Bar dataKey="pee" fill="#6aa9ff" name={t("insights.pee")} hide={hidden.has("pee")} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="poop" fill="#c9a227" name={t("insights.poop")} hide={hidden.has("poop")} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -224,7 +267,7 @@ export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
           <MilkChart data={stats.milk} />
           <BreastBalanceChart data={stats.milk} />
           <SleepChart data={stats.sleep} />
-          <PoopChart data={stats.poop} />
+          <EliminationChart pee={stats.pee} poop={stats.poop} />
           <section className="card">
             <h2 className="card-title">{t("insights.bedtime")}</h2>
             {stats.bedtime.count > 0 && stats.bedtime.avgStartHour != null ? (
@@ -245,7 +288,7 @@ export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
       <section className="card">
         <h2 className="card-title">{t("insights.growth")}</h2>
         {growth ? (
-          <GrowthChart growth={growth} />
+          <GrowthChart growth={growth} start={start} end={end} />
         ) : (
           <div className="empty">{t("app.loading")}</div>
         )}
