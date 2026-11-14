@@ -22,7 +22,7 @@ async function download(url: string, filename: string) {
 }
 
 /** Import / export data as CSV (Google-Sheets friendly). */
-export function DataModal({ onClose }: { onClose: () => void }) {
+export function DataModal({ onClose, onImported }: { onClose: () => void; onImported?: () => void }) {
   const { t } = useLang();
   const fileRef = useRef<HTMLInputElement>(null);
   const [replace, setReplace] = useState(false);
@@ -43,6 +43,7 @@ export function DataModal({ onClose }: { onClose: () => void }) {
       });
       if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
       setSummary(await res.json());
+      onImported?.();
     } catch (e) {
       setError(String(e));
     } finally {
