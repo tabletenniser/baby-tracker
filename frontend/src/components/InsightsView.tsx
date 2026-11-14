@@ -188,14 +188,32 @@ export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
     const r = getUrlParam("range");
     return r === "7" || r === "14" || r === "31" || r === "custom" ? r : "14";
   });
-  const [customStart, setCustomStart] = useState(addDays(today, -13));
-  const [customEnd, setCustomEnd] = useState(today);
+  const [customStart, setCustomStart] = useState(() => {
+    const d = getUrlParam("from");
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : addDays(today, -13);
+  });
+  const [customEnd, setCustomEnd] = useState(() => {
+    const d = getUrlParam("to");
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : today;
+  });
   const [stats, setStats] = useState<StatsData | null>(null);
   const [growth, setGrowth] = useState<GrowthData | null>(null);
 
   useEffect(() => {
     setUrlParam("range", range);
   }, [range]);
+
+  // Keep the custom from/to dates in the URL so a shared custom-range link
+  // restores the exact range (not just range=custom).
+  useEffect(() => {
+    if (range === "custom") {
+      setUrlParam("from", customStart);
+      setUrlParam("to", customEnd);
+    } else {
+      setUrlParam("from", null);
+      setUrlParam("to", null);
+    }
+  }, [range, customStart, customEnd]);
 
   const start = range === "custom" ? customStart : addDays(today, -(parseInt(range, 10) - 1));
   const end = range === "custom" ? customEnd : today;
