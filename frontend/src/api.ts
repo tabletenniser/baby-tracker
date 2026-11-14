@@ -9,6 +9,7 @@ import type {
   GrowthData,
   LogRequest,
   MilkCurveData,
+  Shower,
   Sleep,
   SleepInput,
   StatsData,
@@ -84,6 +85,16 @@ export const updateSupplement = (id: string, s: { name: string; datetime: string
   request<Supplement>(`/api/supplements/${id}`, { method: "PUT", body: JSON.stringify(s) });
 export const deleteSupplement = (id: string) =>
   request<{ ok: boolean }>(`/api/supplements/${id}`, { method: "DELETE" });
+
+// Showers
+export const getShowers = (date?: string) =>
+  request<Shower[]>(`/api/showers${date ? `?date=${date}` : ""}`);
+export const createShower = (s: { datetime: string }) =>
+  request<Shower>("/api/showers", { method: "POST", body: JSON.stringify(s) });
+export const updateShower = (id: string, s: { datetime: string }) =>
+  request<Shower>(`/api/showers/${id}`, { method: "PUT", body: JSON.stringify(s) });
+export const deleteShower = (id: string) =>
+  request<{ ok: boolean }>(`/api/showers/${id}`, { method: "DELETE" });
 
 // Daily summary
 export const getDaily = (date: string) => request<DailySummary>(`/api/daily?date=${date}`);

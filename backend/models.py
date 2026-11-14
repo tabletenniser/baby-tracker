@@ -91,6 +91,14 @@ class Supplement(SupplementCreate):
     id: str
 
 
+class ShowerCreate(BaseModel):
+    datetime: str  # local ISO
+
+
+class Shower(ShowerCreate):
+    id: str
+
+
 class DailySummary(BaseModel):
     date: str
     breastMl: float
@@ -99,5 +107,6 @@ class DailySummary(BaseModel):
     sleepHours: float
     peeCount: int
     poopCount: int
+    showerCount: int
     supplements: List[str]  # names of supplements taken that day
     vitaminD: bool = False  # deprecated, kept for back-compat

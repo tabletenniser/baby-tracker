@@ -19,6 +19,7 @@ const en: Record<string, string> = {
   "summary.sleep": "😴 Sleep",
   "summary.pee": "💧 Pee",
   "summary.poop": "💩 Poop",
+  "summary.shower": "🚿 Shower",
   "summary.supplements": "💊 Supplements",
 
   "timeline.today": "Today",
@@ -27,6 +28,7 @@ const en: Record<string, string> = {
   "add.sleep": "Sleep",
   "add.pee": "Pee",
   "add.poop": "Poop",
+  "add.shower": "Shower",
   "add.supplement": "Supplement",
   "add.log": "Log at a time",
 
@@ -40,6 +42,7 @@ const en: Record<string, string> = {
   "log.sleep": "Sleep",
   "log.pee": "Pee",
   "log.poop": "Poop",
+  "log.shower": "Shower",
   "log.supplement": "Supplement",
   "log.breastTotal": "Total (ml)",
   "log.breastBefore": "Before (g)",
@@ -58,6 +61,7 @@ const en: Record<string, string> = {
   "item.sleptUntil": "Slept until",
   "item.pee": "Pee",
   "item.poop": "Poop",
+  "item.shower": "Shower",
   "item.edit": "Edit",
   "item.total": "Total",
   "item.left": "L",
@@ -131,6 +135,10 @@ const en: Record<string, string> = {
   "supp.otherPlaceholder": "e.g. DHA",
   "supp.needName": "Please choose or enter a supplement.",
   "supp.customName": "Name",
+
+  "shower.add": "Add shower",
+  "shower.edit": "Edit shower",
+  "shower.time": "Time",
 
   "profile.title": "Baby profile",
   "profile.name": "Name",
@@ -235,6 +243,7 @@ const zh: Record<string, string> = {
   "summary.sleep": "😴 睡眠",
   "summary.pee": "💧 小便",
   "summary.poop": "💩 大便",
+  "summary.shower": "🚿 洗澡",
   "summary.supplements": "💊 补充剂",
 
   "timeline.today": "今天",
@@ -243,6 +252,7 @@ const zh: Record<string, string> = {
   "add.sleep": "睡眠",
   "add.pee": "小便",
   "add.poop": "大便",
+  "add.shower": "洗澡",
   "add.supplement": "补充剂",
   "add.log": "一次记录",
 
@@ -256,6 +266,7 @@ const zh: Record<string, string> = {
   "log.sleep": "睡眠",
   "log.pee": "小便",
   "log.poop": "大便",
+  "log.shower": "洗澡",
   "log.supplement": "补充剂",
   "log.breastTotal": "总量（毫升）",
   "log.breastBefore": "喂奶前（克）",
@@ -274,6 +285,7 @@ const zh: Record<string, string> = {
   "item.sleptUntil": "睡到",
   "item.pee": "小便",
   "item.poop": "大便",
+  "item.shower": "洗澡",
   "item.edit": "编辑",
   "item.total": "共",
   "item.left": "左",
@@ -347,6 +359,10 @@ const zh: Record<string, string> = {
   "supp.otherPlaceholder": "例如 DHA",
   "supp.needName": "请选择或输入补充剂。",
   "supp.customName": "名称",
+
+  "shower.add": "添加洗澡",
+  "shower.edit": "编辑洗澡",
+  "shower.time": "时间",
 
   "profile.title": "宝宝资料",
   "profile.name": "名字",
