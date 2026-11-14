@@ -627,6 +627,49 @@ input[type="number"] {
   color: #fff;
 }
 
+/* Timeline event-type filter */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.filter-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.filter-chip:active {
+  transform: scale(0.98);
+}
+.filter-chip.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  opacity: 1;
+}
+.filter-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 /* Combined log form */
 .log-form {
   display: flex;
