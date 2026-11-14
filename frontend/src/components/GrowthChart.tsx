@@ -4,15 +4,27 @@ import {
   Line,
   ResponsiveContainer,
   Scatter,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { GrowthData } from "../types";
 
+interface Hovered {
+  label: string;
+  weightG: number;
+  percentile: number;
+  left: number;
+  top: number;
+  transform: string;
+}
+
 export function GrowthChart({ growth, start, end }: { growth: GrowthData; start: string; end: string }) {
   const { t } = useLang();
+  const [hovered, setHovered] = useState<Hovered | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
+
   if (!growth.curves || !growth.sex) {
     return <div className="empty">{t("growth.setSex")}</div>;
   }
@@ -22,6 +34,8 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
     x: +(m.ageDays / 30.44).toFixed(2),
     y: m.weightKg,
     label: m.date,
+    weightG: Math.round(m.weightKg * 1000),
+    percentile: m.percentile,
   }));
   const measurements = all.filter((m) => m.label >= start && m.label <= end);
   const ages = measurements.map((m) => m.x);
@@ -31,6 +45,47 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
   // Clip the WHO curves to the visible range so they don't stretch the axis to 0-24mo.
   const toXY = (arr: number[]) =>
     curves.ageMonths.map((m, i) => ({ x: m, y: arr[i] })).filter((p) => p.x >= minAge && p.x <= maxAge);
+
+  // Custom hover tooltip: the default Recharts Tooltip is unreliable for a
+  // numeric-axis Scatter, so each point handles its own hover and we render a
+  // positioned tooltip showing weight (grams) + WHO percentile.
+  const renderDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (payload == null || payload.percentile == null) return <g />;
+    // Position the tooltip so it stays within the chart bounds for edge points.
+    const containerW = chartRef.current?.clientWidth ?? 600;
+    let left = cx;
+    let transform = "translate(-50%, -100%)";
+    if (cx < 150) {
+      left = cx + 12;
+      transform = "translate(0, -100%)";
+    } else if (cx > containerW - 150) {
+      left = cx - 12;
+      transform = "translate(-100%, -100%)";
+    }
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={5}
+        fill="#3d3420"
+        stroke="#fff"
+        strokeWidth={1.5}
+        onMouseEnter={() =>
+          setHovered({
+            label: payload.label,
+            weightG: payload.weightG,
+            percentile: payload.percentile,
+            left,
+            top: cy - 12,
+            transform,
+          })
+        }
+        onMouseLeave={() => setHovered(null)}
+        style={{ cursor: "pointer" }}
+      />
+    );
+  };
 
   return (
     <div>
@@ -45,9 +100,9 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
           {growth.measurements.length === 0 ? t("growth.noPoints") : t("growth.noPointsInRange")}
         </div>
       )}
-      <div className="chart">
+      <div className="chart" ref={chartRef} style={{ position: "relative" }}>
         <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart margin={{ top: 10, right: 12, left: -8, bottom: 4 }}>
+          <ComposedChart data={measurements} margin={{ top: 10, right: 12, left: -8, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3e6c8" />
             <XAxis
               dataKey="x"
@@ -61,21 +116,30 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
               tick={{ fontSize: 11 }}
               tickFormatter={(v) => `${v}kg`}
             />
-            <Tooltip
-              labelFormatter={(x) => `${x} ${t("growth.months")}`}
-              formatter={(v: any, name: any) => [
-                `${Number(v).toFixed(2)} kg`,
-                name,
-              ]}
-            />
             <Line data={toXY(curves.p3)} dataKey="y" name="3rd" stroke="#f0e4c4" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Line data={toXY(curves.p15)} dataKey="y" name="15th" stroke="#ffd27a" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#d98e04" dot={false} strokeWidth={2} isAnimationActive={false} />
             <Line data={toXY(curves.p85)} dataKey="y" name="85th" stroke="#ffd27a" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#f0e4c4" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Scatter data={measurements} dataKey="y" fill="#3d3420" name={t("growth.baby")} isAnimationActive={false} />
+            <Scatter data={measurements} dataKey="y" shape={renderDot} fill="#3d3420" name={t("growth.baby")} isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
+        {hovered && (
+          <div
+            className="growth-tooltip"
+            style={{ left: hovered.left, top: hovered.top, transform: hovered.transform }}
+          >
+            <div className="growth-tooltip-date">{hovered.label}</div>
+            <div className="growth-tooltip-row">
+              <span>{t("growth.weight")}</span>
+              <b>{hovered.weightG} g</b>
+            </div>
+            <div className="growth-tooltip-row">
+              <span>{t("growth.percentile")}</span>
+              <b>{t("insights.percentile", { n: Math.round(hovered.percentile) })}</b>
+            </div>
+          </div>
+        )}
       </div>
       <div className="growth-legend">
         <span><i style={{ background: "#d98e04" }} /> {t("growth.p50")}</span>

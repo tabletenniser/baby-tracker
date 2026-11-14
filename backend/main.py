@@ -1006,13 +1006,16 @@ def growth():
     measurements.sort(key=lambda m: m["datetime"])
 
     curves = WHO_CURVES.get(sex)
+    if curves:
+        for m in measurements:
+            m["percentile"] = compute_percentile(m["weightKg"], m["ageDays"], curves)
     latest = None
     if measurements and curves:
         last = measurements[-1]
         latest = {
             "weightKg": last["weightKg"],
             "ageDays": last["ageDays"],
-            "percentile": compute_percentile(last["weightKg"], last["ageDays"], curves),
+            "percentile": last["percentile"],
         }
     return {
         "sex": sex,

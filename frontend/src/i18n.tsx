@@ -193,6 +193,8 @@ const en: Record<string, string> = {
   "growth.noPoints": "No weight points yet — record a breast feeding with a “before” weight to add one.",
   "growth.noPointsInRange": "No weight points in this date range.",
   "growth.months": "months",
+  "growth.weight": "Weight",
+  "growth.percentile": "Percentile",
   "growth.note": "WHO weight-for-age reference. Weight = the “before” weight from each breast feeding.",
 
   "trend.title": "🥛 Feeding trend",
@@ -417,6 +419,8 @@ const zh: Record<string, string> = {
   "growth.noPoints": "还没有体重数据——记录一次带“喂奶前”体重的母乳喂养即可添加。",
   "growth.noPointsInRange": "此日期范围内没有体重数据点。",
   "growth.months": "个月",
+  "growth.weight": "体重",
+  "growth.percentile": "百分位",
   "growth.note": "WHO 年龄-体重参考曲线。体重 = 每次母乳喂养的“喂奶前”体重。",
 
   "trend.title": "🥛 喂奶趋势",

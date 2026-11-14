@@ -189,6 +189,7 @@ export interface GrowthMeasurement {
   date: string;
   weightKg: number;
   ageDays: number;
+  percentile: number;
 }
 export interface GrowthCurves {
   ageMonths: number[];
