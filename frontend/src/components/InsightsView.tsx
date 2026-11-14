@@ -138,7 +138,7 @@ function PoopChart({ data }: { data: CountPoint[] }) {
   );
 }
 
-export function InsightsView() {
+export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
   const { t } = useLang();
   const today = todayStr();
   const [range, setRange] = useState<Range>(() => {
@@ -170,11 +170,11 @@ export function InsightsView() {
     return () => {
       cancelled = true;
     };
-  }, [start, end]);
+  }, [start, end, refreshSignal]);
 
   useEffect(() => {
     getGrowth().then(setGrowth).catch(console.error);
-  }, []);
+  }, [refreshSignal]);
 
   const rangeLabel: Record<Range, string> = {
     "7": t("insights.d7"),

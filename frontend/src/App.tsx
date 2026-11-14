@@ -131,7 +131,7 @@ export default function App() {
         {tab === "timeline" ? (
           <TimelineView date={date} refreshSignal={refreshSignal} />
         ) : (
-          <InsightsView />
+          <InsightsView refreshSignal={refreshSignal} />
         )}
       </main>
 
@@ -147,7 +147,12 @@ export default function App() {
         />
       )}
 
-      {showData && <DataModal onClose={() => setShowData(false)} />}
+      {showData && (
+        <DataModal
+          onClose={() => setShowData(false)}
+          onImported={() => setRefreshSignal((s) => s + 1)}
+        />
+      )}
     </div>
   );
 }
