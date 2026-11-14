@@ -34,6 +34,10 @@ export function DailySummaryCard({ daily }: { daily: DailySummary }) {
           <div className="stat-label">{t("summary.poop")}</div>
         </div>
         <div className="stat">
+          <div className="stat-value">{daily.showerCount}</div>
+          <div className="stat-label">{t("summary.shower")}</div>
+        </div>
+        <div className="stat">
           <div className="stat-value stat-supps">{supps}</div>
           <div className="stat-label">{t("summary.supplements")}</div>
         </div>

@@ -23,6 +23,7 @@ DEFAULT: Dict[str, Any] = {
     "sleeps": [],
     "eliminations": [],
     "supplements": [],
+    "showers": [],
     "vitaminD": {},  # kept for back-compat
     "dayCutoffOverrides": {},  # {"YYYY-MM-DD": "HH:MM"}
 }

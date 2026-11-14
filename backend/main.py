@@ -20,6 +20,7 @@ from models import (
     EliminationCreate,
     FeedingCreate,
     PoopSize,
+    ShowerCreate,
     SleepCreate,
     SupplementCreate,
     VitaminD,
@@ -316,6 +317,7 @@ def daily_summary(date: str, data: Optional[dict] = None) -> dict:
         sleep_hours += sleep_overlap_hours(sleep_view(s), date, data)
     pee = sum(1 for e in data["eliminations"] if e["type"] == "pee" and day_for(e["datetime"], data) == date)
     poop = sum(1 for e in data["eliminations"] if e["type"] == "poop" and day_for(e["datetime"], data) == date)
+    shower = sum(1 for s in data.get("showers", []) if day_for(s["datetime"], data) == date)
     supps = sorted({s["name"] for s in data["supplements"] if day_for(s["datetime"], data) == date})
     total = breast + formula
     return {
@@ -328,6 +330,7 @@ def daily_summary(date: str, data: Optional[dict] = None) -> dict:
         "sleepHours": round(sleep_hours, 2),
         "peeCount": pee,
         "poopCount": poop,
+        "showerCount": shower,
         "supplements": supps,
         "vitaminD": data["vitaminD"].get(date, {}).get("taken", False),
     }
@@ -652,6 +655,61 @@ def delete_supplement(sid: str):
     return {"ok": True}
 
 
+# --------------------------------------------------------------------------- #
+# Showers
+# --------------------------------------------------------------------------- #
+@app.get("/api/showers")
+def list_showers(date: Optional[str] = None):
+    data = store.read()
+    showers = data.get("showers", [])
+    if date:
+        showers = [s for s in showers if day_for(s["datetime"], data) == date]
+    showers = sorted(showers, key=lambda s: s["datetime"])
+    return showers
+
+
+@app.post("/api/showers")
+def create_shower(s: ShowerCreate):
+    shid = store.new_id()
+
+    def mut(data):
+        rec = s.model_dump()
+        rec["id"] = shid
+        data["showers"].append(rec)
+
+    store.write(mut)
+    rec = next(x for x in store.read()["showers"] if x["id"] == shid)
+    return rec
+
+
+@app.put("/api/showers/{shid}")
+def update_shower(shid: str, s: ShowerCreate):
+    def mut(data):
+        for i, x in enumerate(data["showers"]):
+            if x["id"] == shid:
+                rec = s.model_dump()
+                rec["id"] = shid
+                data["showers"][i] = rec
+                return
+        raise HTTPException(404, "shower not found")
+
+    store.write(mut)
+    rec = next(x for x in store.read()["showers"] if x["id"] == shid)
+    return rec
+
+
+@app.delete("/api/showers/{shid}")
+def delete_shower(shid: str):
+    def mut(data):
+        before = len(data["showers"])
+        data["showers"] = [x for x in data["showers"] if x["id"] != shid]
+        if len(data["showers"]) == before:
+            raise HTTPException(404, "shower not found")
+
+    store.write(mut)
+    return {"ok": True}
+
+
 class LogRequest(BaseModel):
     """Log several events at one timestamp in a single request."""
     datetime: str  # local ISO, e.g. 2026-11-01T07:00
@@ -672,6 +730,8 @@ class LogRequest(BaseModel):
     poop: bool = False
     poopSize: Optional[PoopSize] = "M"
     poopWatery: Optional[WateryLevel] = 2
+    # shower
+    shower: bool = False
     # supplements (names)
     supplements: Optional[List[str]] = None
 
@@ -682,7 +742,7 @@ def log_events(req: LogRequest):
 
     Returns the ids of the records created, grouped by kind.
     """
-    created = {"feedings": [], "sleeps": [], "eliminations": [], "supplements": []}
+    created = {"feedings": [], "sleeps": [], "eliminations": [], "supplements": [], "showers": []}
 
     def mut(data):
         dt = req.datetime
@@ -723,6 +783,11 @@ def log_events(req: LogRequest):
                 "size": req.poopSize, "watery": req.poopWatery,
             })
             created["eliminations"].append(eid)
+        # shower
+        if req.shower:
+            shid = store.new_id()
+            data["showers"].append({"id": shid, "datetime": dt})
+            created["showers"].append(shid)
         # supplements
         for name in (req.supplements or []):
             name = (name or "").strip()
@@ -771,6 +836,7 @@ def timeline(date: str):
     feedings = [feeding_view(f) for f in data["feedings"] if day_for(f["datetime"], data) == date]
     eliminations = [e for e in data["eliminations"] if day_for(e["datetime"], data) == date]
     supplements = [s for s in data["supplements"] if day_for(s["datetime"], data) == date]
+    showers = [s for s in data.get("showers", []) if day_for(s["datetime"], data) == date]
 
     sleeps = []
     for s in data["sleeps"]:
@@ -786,6 +852,7 @@ def timeline(date: str):
         "sleeps": sleeps,
         "eliminations": sorted(eliminations, key=lambda e: e["datetime"]),
         "supplements": sorted(supplements, key=lambda s: s["datetime"]),
+        "showers": sorted(showers, key=lambda s: s["datetime"]),
         "daily": daily_summary(date, data),
         "cutoff": cutoff,
     }
@@ -998,6 +1065,7 @@ async def import_csv_endpoint(request: Request, clear: bool = False):
             data["sleeps"] = []
             data["eliminations"] = []
             data["supplements"] = []
+            data["showers"] = []
         for kind, payload in records:
             payload["id"] = store.new_id()
             data[kind].append(payload)

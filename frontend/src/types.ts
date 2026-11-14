@@ -100,12 +100,18 @@ export interface LogRequest {
   poop?: boolean;
   poopSize?: PoopSize | null;
   poopWatery?: number | null;
+  shower?: boolean;
   supplements?: string[];
 }
 
 export interface Supplement {
   id: string;
   name: string;
+  datetime: string;
+}
+
+export interface Shower {
+  id: string;
   datetime: string;
 }
 
@@ -117,6 +123,7 @@ export interface DailySummary {
   sleepHours: number;
   peeCount: number;
   poopCount: number;
+  showerCount: number;
   supplements: string[];
   vitaminD: boolean;
 }
@@ -127,6 +134,7 @@ export interface TimelineData {
   sleeps: Sleep[];
   eliminations: Elimination[];
   supplements: Supplement[];
+  showers: Shower[];
   daily: DailySummary;
   cutoff: string;
 }

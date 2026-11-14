@@ -49,6 +49,7 @@ HEADER = [
     "poop",
     "poop_size",
     "poop_watery",
+    "shower",
     "supplement",
 ]
 
@@ -59,7 +60,7 @@ _OLD_HEADER = [
     "size", "watery", "supplement",
 ]
 
-VALID_TYPES = {"breast", "bottle", "sleep", "pee", "poop", "supplement"}
+VALID_TYPES = {"breast", "bottle", "sleep", "pee", "poop", "shower", "supplement"}
 
 _DT_FORMATS = [
     "%Y-%m-%d %H:%M:%S",
@@ -198,7 +199,7 @@ def _new_group():
         "before_weight": 0.0, "left_time": "", "right_time": "",
         "formula_ml": 0.0, "bottle_breast_ml": 0.0,
         "sleep_hours": 0.0, "pee": False, "poop": False,
-        "poop_size": "", "poop_watery": "", "supplements": [],
+        "poop_size": "", "poop_watery": "", "shower": False, "supplements": [],
     }
 
 
@@ -234,6 +235,8 @@ def _merge_into_group(g, kind, obj):
         name = (obj.get("name") or "").strip()
         if name:
             g["supplements"].append(name)
+    elif kind == "shower":
+        g["shower"] = True
 
 
 def _group_row(g, d, t):
@@ -252,6 +255,7 @@ def _group_row(g, d, t):
         "Y" if g["poop"] else "",
         g["poop_size"] if g["poop"] else "",
         g["poop_watery"] if g["poop"] else "",
+        "Y" if g["shower"] else "",
         "; ".join(g["supplements"]),
     ]
 
@@ -272,6 +276,8 @@ def export_csv(data: dict) -> str:
         items.append((e.get("datetime", ""), "elim", e))
     for s in data.get("supplements", []):
         items.append((s.get("datetime", ""), "supp", s))
+    for s in data.get("showers", []):
+        items.append((s.get("datetime", ""), "shower", s))
     items.sort(key=lambda x: x[0])
 
     groups = {}
@@ -298,15 +304,17 @@ def template_csv() -> str:
     w = csv.writer(buf)
     w.writerow(HEADER)
     # 7am: breast 60 (L29/R31, before 5000g) + bottle 30ml formula + pee + vitamin D
-    w.writerow(["2026-11-01", "07:00", "60", "29", "31", "5000", "", "", "30", "0", "", "Y", "", "", "", "Vitamin D"])
+    w.writerow(["2026-11-01", "07:00", "60", "29", "31", "5000", "", "", "30", "0", "", "Y", "", "", "", "", "Vitamin D"])
     # 11:30am: 2.5h sleep
-    w.writerow(["2026-11-01", "11:30", "", "", "", "", "", "", "", "", "2.5", "", "", "", "", ""])
+    w.writerow(["2026-11-01", "11:30", "", "", "", "", "", "", "", "", "2.5", "", "", "", "", "", ""])
     # 2pm: poop, size M, watery 2
-    w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "Y", "M", "2", ""])
+    w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "Y", "M", "2", "", ""])
     # 3pm: pee only
-    w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "Y", "", "", "", ""])
+    w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "Y", "", "", "", "", ""])
+    # 4pm: shower
+    w.writerow(["2026-11-01", "16:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Y", ""])
     # 6pm: two supplements at one time (semicolon-separated)
-    w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D; DHA"])
+    w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D; DHA"])
     return buf.getvalue()
 
 
@@ -317,7 +325,7 @@ def template_csv() -> str:
 class _Import:
     def __init__(self):
         self.records = []
-        self.imported = {"feedings": 0, "sleeps": 0, "eliminations": 0, "supplements": 0}
+        self.imported = {"feedings": 0, "sleeps": 0, "eliminations": 0, "supplements": 0, "showers": 0}
         self.errors = []
         self.skipped = 0
 
@@ -384,6 +392,10 @@ def _import_new_row(imp, row, i):
                 pass
         imp.add("eliminations", rec)
 
+    # shower
+    if _is_yes(row.get("shower")):
+        imp.add("showers", {"datetime": dt})
+
     # supplement(s)
     name = (row.get("supplement") or "").strip()
     if name:
@@ -442,6 +454,8 @@ def _import_old_row(imp, row, i):
                 except (TypeError, ValueError):
                     pass
         imp.add("eliminations", rec)
+    elif raw_type == "shower":
+        imp.add("showers", {"datetime": dt})
     elif raw_type == "supplement":
         name = (row.get("supplement") or "").strip()
         if not name:

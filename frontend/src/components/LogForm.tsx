@@ -43,6 +43,8 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   const [poop, setPoop] = useState(false);
   const [poopSize, setPoopSize] = useState<PoopSize | "">("");
   const [poopWatery, setPoopWatery] = useState("");
+  // shower
+  const [shower, setShower] = useState(false);
   // supplements (multiple allowed)
   const [suppSelected, setSuppSelected] = useState<string[]>([]);
   const [suppOther, setSuppOther] = useState("");
@@ -65,7 +67,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   }
 
   async function submit() {
-    if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !suppList.length) {
+    if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !shower && !suppList.length) {
       setError(t("log.needSomething"));
       return;
     }
@@ -92,6 +94,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
       if (poopSize) req.poopSize = poopSize;
       if (poopWatery) req.poopWatery = parseInt(poopWatery, 10);
     }
+    if (shower) req.shower = true;
     if (suppList.length) req.supplements = suppList;
     setSaving(true);
     setError(null);
@@ -115,6 +118,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     if (hasSleep) items.push(`${t("item.sleep")} ${num(sleepHours) ?? 0}h`);
     if (pee) items.push(t("item.pee"));
     if (poop) items.push(t("item.poop"));
+    if (shower) items.push(t("item.shower"));
     if (suppList.length) items.push(suppList.map((n) => supplementLabel(n, t)).join(", "));
     return items.length ? items : [t("log.nothing")];
   }
@@ -227,6 +231,20 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
             </label>
           </div>
         )}
+      </div>
+
+      <div className="log-section">
+        <div className="log-section-head">
+          <span className="log-emoji">🚿</span>
+          <span>{t("log.shower")}</span>
+        </div>
+        <div className="log-toggles">
+          <button type="button" className={`toggle-chip${shower ? " active" : ""}`} onClick={() => setShower(!shower)}>
+            <span className="log-emoji">🚿</span>
+            <span>{t("log.shower")}</span>
+            {shower && <span className="chip-check">✓</span>}
+          </button>
+        </div>
       </div>
 
       <div className="log-section">
