@@ -30,6 +30,9 @@ const en: Record<string, string> = {
   "add.supplement": "Supplement",
   "add.log": "Log at a time",
 
+  "filter.title": "Show",
+  "filter.noneShown": "No events match the selected filter.",
+
   "log.title": "Log at a time",
   "log.time": "Time",
   "log.breast": "Breast",
@@ -239,6 +242,9 @@ const zh: Record<string, string> = {
   "add.poop": "大便",
   "add.supplement": "补充剂",
   "add.log": "一次记录",
+
+  "filter.title": "显示",
+  "filter.noneShown": "没有符合筛选的事件。",
 
   "log.title": "一次记录",
   "log.time": "时间",

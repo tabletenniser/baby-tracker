@@ -30,7 +30,17 @@ import { SupplementForm } from "./SupplementForm";
 
 type Kind = "feeding" | "sleep" | "elimination" | "supplement";
 type ModalKind = Kind | "log" | null;
+type Cat = "breast" | "bottle" | "sleep" | "pee" | "poop" | "supplement";
 type T = (key: string, vars?: Record<string, string | number>) => string;
+
+const FILTER_CATS: { cat: Cat; emoji: string; labelKey: string }[] = [
+  { cat: "breast", emoji: "🤱", labelKey: "add.breast" },
+  { cat: "bottle", emoji: "🍼", labelKey: "add.bottle" },
+  { cat: "sleep", emoji: "😴", labelKey: "add.sleep" },
+  { cat: "pee", emoji: "💧", labelKey: "add.pee" },
+  { cat: "poop", emoji: "💩", labelKey: "add.poop" },
+  { cat: "supplement", emoji: "💊", labelKey: "add.supplement" },
+];
 
 interface Item {
   key: string;
@@ -41,6 +51,7 @@ interface Item {
   detail?: string;
   overnight?: boolean;
   kind: Kind;
+  cat: Cat;
   id: string;
 }
 
@@ -65,6 +76,7 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
       title: f.type === "breast" ? t("item.breast") : t("item.bottle"),
       detail,
       kind: "feeding",
+      cat: f.type === "breast" ? "breast" : "bottle",
       id: f.id,
     });
   }
@@ -83,6 +95,7 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
         : `${formatHours(s.hours, lang)} · ${timeOf(s.start)} → ${timeOf(s.end)}`,
       overnight,
       kind: "sleep",
+      cat: "sleep",
       id: s.id,
     });
   }
@@ -106,6 +119,7 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
       title: e.type === "pee" ? t("item.pee") : t("item.poop"),
       detail,
       kind: "elimination",
+      cat: e.type === "pee" ? "pee" : "poop",
       id: e.id,
     });
   }
@@ -117,6 +131,7 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
       icon: "💊",
       title: supplementLabel(s.name, t),
       kind: "supplement",
+      cat: "supplement",
       id: s.id,
     });
   }
@@ -138,6 +153,16 @@ export function TimelineView({ date, refreshSignal }: Props) {
   const [editElim, setEditElim] = useState<Elimination | null>(null);
   const [editSupp, setEditSupp] = useState<Supplement | null>(null);
   const [addType, setAddType] = useState<FeedingType | ElimType | null>(null);
+  const [hiddenCats, setHiddenCats] = useState<Set<Cat>>(new Set());
+
+  function toggleCat(cat: Cat) {
+    setHiddenCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }
 
   const refresh = useCallback(async () => {
     try {
@@ -212,6 +237,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
   }
 
   const items = data ? buildItems(data, t, lang) : [];
+  const visibleItems = items.filter((it) => !hiddenCats.has(it.cat));
 
   return (
     <>
@@ -248,6 +274,24 @@ export function TimelineView({ date, refreshSignal }: Props) {
         ⏱️ {t("add.log")}
       </button>
 
+      <div className="filter-bar">
+        <span className="filter-label">{t("filter.title")}</span>
+        {FILTER_CATS.map(({ cat, emoji, labelKey }) => {
+          const hidden = hiddenCats.has(cat);
+          return (
+            <button
+              key={cat}
+              className={`filter-chip${hidden ? "" : " active"}`}
+              onClick={() => toggleCat(cat)}
+              aria-pressed={!hidden}
+            >
+              <span className="filter-emoji">{emoji}</span>
+              <span>{t(labelKey)}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <section className="card">
         <div className="timeline-head">
           <h2 className="card-title">
@@ -258,8 +302,12 @@ export function TimelineView({ date, refreshSignal }: Props) {
           )}
         </div>
         <div className="timeline">
-          {items.length === 0 && <div className="empty">{t("item.noActivity")}</div>}
-          {items.map((it) => (
+          {visibleItems.length === 0 && (
+            <div className="empty">
+              {hiddenCats.size > 0 ? t("filter.noneShown") : t("item.noActivity")}
+            </div>
+          )}
+          {visibleItems.map((it) => (
             <div className={`timeline-item ${it.overnight ? "overnight" : ""}`} key={it.key}>
               <div className="timeline-time">{it.displayTime}</div>
               <div className="timeline-icon">{it.icon}</div>
