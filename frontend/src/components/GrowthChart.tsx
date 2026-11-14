@@ -11,20 +11,26 @@ import {
 import { useLang } from "../i18n";
 import type { GrowthData } from "../types";
 
-export function GrowthChart({ growth }: { growth: GrowthData }) {
+export function GrowthChart({ growth, start, end }: { growth: GrowthData; start: string; end: string }) {
   const { t } = useLang();
   if (!growth.curves || !growth.sex) {
     return <div className="empty">{t("growth.setSex")}</div>;
   }
 
   const curves = growth.curves;
-  const toXY = (arr: number[]) => curves.ageMonths.map((m, i) => ({ x: m, y: arr[i] }));
-  const measurements = growth.measurements.map((m) => ({
+  const all = growth.measurements.map((m) => ({
     x: +(m.ageDays / 30.44).toFixed(2),
     y: m.weightKg,
     label: m.date,
   }));
-  const maxAge = Math.max(24, ...measurements.map((m) => m.x + 2));
+  const measurements = all.filter((m) => m.label >= start && m.label <= end);
+  const ages = measurements.map((m) => m.x);
+  // Adapt the x-axis to the visible points so early measurements aren't bunched at the edge.
+  const minAge = ages.length > 0 ? Math.max(0, Math.min(...ages) - 1) : 0;
+  const maxAge = ages.length > 0 ? Math.max(minAge + 3, Math.max(...ages) + 1) : 12;
+  // Clip the WHO curves to the visible range so they don't stretch the axis to 0-24mo.
+  const toXY = (arr: number[]) =>
+    curves.ageMonths.map((m, i) => ({ x: m, y: arr[i] })).filter((p) => p.x >= minAge && p.x <= maxAge);
 
   return (
     <div>
@@ -36,7 +42,7 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
       )}
       {measurements.length === 0 && (
         <div className="muted small" style={{ marginBottom: 8 }}>
-          {t("growth.noPoints")}
+          {growth.measurements.length === 0 ? t("growth.noPoints") : t("growth.noPointsInRange")}
         </div>
       )}
       <div className="chart">
@@ -46,7 +52,7 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
             <XAxis
               dataKey="x"
               type="number"
-              domain={[0, maxAge]}
+              domain={[minAge, maxAge]}
               tickFormatter={(v) => `${v}mo`}
               tick={{ fontSize: 11 }}
             />
@@ -67,7 +73,7 @@ export function GrowthChart({ growth }: { growth: GrowthData }) {
             <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#d98e04" dot={false} strokeWidth={2} isAnimationActive={false} />
             <Line data={toXY(curves.p85)} dataKey="y" name="85th" stroke="#ffd27a" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#f0e4c4" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Scatter data={measurements} fill="#3d3420" name={t("growth.baby")} />
+            <Scatter data={measurements} dataKey="y" fill="#3d3420" name={t("growth.baby")} isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
