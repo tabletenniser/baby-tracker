@@ -47,44 +47,55 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
     curves.ageMonths.map((m, i) => ({ x: m, y: arr[i] })).filter((p) => p.x >= minAge && p.x <= maxAge);
 
   // Custom hover tooltip: the default Recharts Tooltip is unreliable for a
-  // numeric-axis Scatter, so each point handles its own hover and we render a
-  // positioned tooltip showing weight (grams) + WHO percentile.
-  const renderDot = (props: any) => {
-    const { cx, cy, payload } = props;
-    if (payload == null || payload.percentile == null) return <g />;
-    // Position the tooltip so it stays within the chart bounds for edge points.
-    const containerW = chartRef.current?.clientWidth ?? 600;
-    let left = cx;
-    let transform = "translate(-50%, -100%)";
-    if (cx < 150) {
-      left = cx + 12;
-      transform = "translate(0, -100%)";
-    } else if (cx > containerW - 150) {
-      left = cx - 12;
-      transform = "translate(-100%, -100%)";
+  // numeric-axis Scatter, and per-point mouseleave is flaky, so the chart
+  // container tracks the cursor and finds the nearest measurement point.
+  const findPointAt = (clientX: number, clientY: number): Hovered | null => {
+    const chart = chartRef.current;
+    if (!chart) return null;
+    const chartRect = chart.getBoundingClientRect();
+    const svg = chart.querySelector("svg");
+    if (!svg) return null;
+    const svgRect = svg.getBoundingClientRect();
+    const sx = svgRect.width / (svg.clientWidth || svgRect.width);
+    const sy = svgRect.height / (svg.clientHeight || svgRect.height);
+    const dots = Array.from(svg.querySelectorAll("circle")).filter((c) => c.getAttribute("r") === "5");
+    // Pick the nearest point within the threshold (points can overlap).
+    let best = -1;
+    let bestDist = Infinity;
+    for (let i = 0; i < dots.length; i++) {
+      const d = dots[i];
+      const px = svgRect.left + parseFloat(d.getAttribute("cx") || "0") * sx;
+      const py = svgRect.top + parseFloat(d.getAttribute("cy") || "0") * sy;
+      const dx = clientX - px;
+      const dy = clientY - py;
+      const dist = dx * dx + dy * dy;
+      if (dist <= 144 && dist < bestDist) {
+        best = i;
+        bestDist = dist;
+      }
     }
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={5}
-        fill="#3d3420"
-        stroke="#fff"
-        strokeWidth={1.5}
-        onMouseEnter={() =>
-          setHovered({
-            label: payload.label,
-            weightG: payload.weightG,
-            percentile: payload.percentile,
-            left,
-            top: cy - 12,
-            transform,
-          })
-        }
-        onMouseLeave={() => setHovered(null)}
-        style={{ cursor: "pointer" }}
-      />
-    );
+    if (best < 0) return null;
+    const m = measurements[best];
+    if (!m) return null;
+    const d = dots[best];
+    const px = svgRect.left + parseFloat(d.getAttribute("cx") || "0") * sx;
+    const py = svgRect.top + parseFloat(d.getAttribute("cy") || "0") * sy;
+    const left = px - chartRect.left;
+    let transform = "translate(-50%, -100%)";
+    if (left < 150) transform = "translate(12px, -100%)";
+    else if (left > chartRect.width - 150) transform = "translate(calc(-100% - 12px), -100%)";
+    return { label: m.label, weightG: m.weightG, percentile: m.percentile, left, top: py - chartRect.top - 12, transform };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const p = findPointAt(e.clientX, e.clientY);
+    setHovered((prev) => (p && prev && prev.label === p.label ? prev : p));
+  };
+  const handleMouseLeave = () => setHovered(null);
+
+  const renderDot = (props: any) => {
+    const { cx, cy } = props;
+    return <circle cx={cx} cy={cy} r={5} fill="#3d3420" stroke="#fff" strokeWidth={1.5} />;
   };
 
   return (
@@ -100,7 +111,13 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
           {growth.measurements.length === 0 ? t("growth.noPoints") : t("growth.noPointsInRange")}
         </div>
       )}
-      <div className="chart" ref={chartRef} style={{ position: "relative" }}>
+      <div
+        className="chart"
+        ref={chartRef}
+        style={{ position: "relative" }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={measurements} margin={{ top: 10, right: 12, left: -8, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3e6c8" />
