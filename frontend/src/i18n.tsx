@@ -140,6 +140,16 @@ const en: Record<string, string> = {
   "shower.edit": "Edit shower",
   "shower.time": "Time",
 
+  "add.note": "Note",
+  "log.note": "Note",
+  "item.note": "Note",
+  "note.add": "Add note",
+  "note.edit": "Edit note",
+  "note.time": "Time",
+  "note.text": "Note",
+  "note.placeholder": "e.g. Played outside, mood was good",
+  "note.needText": "Please enter a note.",
+
   "profile.title": "Baby profile",
   "profile.name": "Name",
   "profile.birthday": "Birthday",
@@ -365,6 +375,16 @@ const zh: Record<string, string> = {
   "shower.add": "添加洗澡",
   "shower.edit": "编辑洗澡",
   "shower.time": "时间",
+
+  "add.note": "备注",
+  "log.note": "备注",
+  "item.note": "备注",
+  "note.add": "添加备注",
+  "note.edit": "编辑备注",
+  "note.time": "时间",
+  "note.text": "备注",
+  "note.placeholder": "例如：玩了户外，心情不错",
+  "note.needText": "请输入备注。",
 
   "profile.title": "宝宝资料",
   "profile.name": "名字",

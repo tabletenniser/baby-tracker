@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   deleteElimination,
   deleteFeeding,
+  deleteNote,
   deleteShower,
   deleteSleep,
   deleteSupplement,
@@ -14,6 +15,7 @@ import type {
   ElimType,
   Feeding,
   FeedingType,
+  Note,
   Shower,
   Sleep,
   Supplement,
@@ -27,13 +29,14 @@ import { FeedingTrend } from "./FeedingTrend";
 import { LogForm } from "./LogForm";
 import { MilkCurve } from "./MilkCurve";
 import { Modal } from "./Modal";
+import { NoteForm } from "./NoteForm";
 import { SleepForm } from "./SleepForm";
 import { ShowerForm } from "./ShowerForm";
 import { SupplementForm } from "./SupplementForm";
 
-type Kind = "feeding" | "sleep" | "elimination" | "supplement" | "shower";
+type Kind = "feeding" | "sleep" | "elimination" | "supplement" | "shower" | "note";
 type ModalKind = Kind | "log" | null;
-type Cat = "breast" | "bottle" | "sleep" | "pee" | "poop" | "shower" | "supplement";
+type Cat = "breast" | "bottle" | "sleep" | "pee" | "poop" | "shower" | "supplement" | "note";
 type T = (key: string, vars?: Record<string, string | number>) => string;
 
 const FILTER_CATS: { cat: Cat; emoji: string; labelKey: string }[] = [
@@ -44,6 +47,7 @@ const FILTER_CATS: { cat: Cat; emoji: string; labelKey: string }[] = [
   { cat: "poop", emoji: "💩", labelKey: "add.poop" },
   { cat: "shower", emoji: "🚿", labelKey: "add.shower" },
   { cat: "supplement", emoji: "💊", labelKey: "add.supplement" },
+  { cat: "note", emoji: "📝", labelKey: "add.note" },
 ];
 
 interface Item {
@@ -151,6 +155,19 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
       id: s.id,
     });
   }
+  for (const n of data.notes) {
+    items.push({
+      key: `note-${n.id}`,
+      sortTime: n.datetime,
+      displayTime: timeOf(n.datetime),
+      icon: "📝",
+      title: t("item.note"),
+      detail: n.text,
+      kind: "note",
+      cat: "note",
+      id: n.id,
+    });
+  }
   items.sort((a, b) => a.sortTime.localeCompare(b.sortTime));
   return items;
 }
@@ -169,6 +186,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
   const [editElim, setEditElim] = useState<Elimination | null>(null);
   const [editSupp, setEditSupp] = useState<Supplement | null>(null);
   const [editShower, setEditShower] = useState<Shower | null>(null);
+  const [editNote, setEditNote] = useState<Note | null>(null);
   const [addType, setAddType] = useState<FeedingType | ElimType | null>(null);
   const [hiddenCats, setHiddenCats] = useState<Set<Cat>>(new Set());
 
@@ -199,6 +217,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditElim(null);
     setEditSupp(null);
     setEditShower(null);
+    setEditNote(null);
     setAddType(null);
     (async () => {
       try {
@@ -219,6 +238,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditElim(null);
     setEditSupp(null);
     setEditShower(null);
+    setEditNote(null);
     setAddType(addType ?? null);
     setModal(kind);
   }
@@ -231,6 +251,8 @@ export function TimelineView({ date, refreshSignal }: Props) {
       setEditElim(data.eliminations.find((e) => e.id === item.id) ?? null);
     else if (item.kind === "shower")
       setEditShower(data.showers.find((s) => s.id === item.id) ?? null);
+    else if (item.kind === "note")
+      setEditNote(data.notes.find((n) => n.id === item.id) ?? null);
     else setEditSupp(data.supplements.find((s) => s.id === item.id) ?? null);
     setModal(item.kind);
   }
@@ -242,6 +264,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditElim(null);
     setEditSupp(null);
     setEditShower(null);
+    setEditNote(null);
     setAddType(null);
   }
 
@@ -252,6 +275,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
       else if (item.kind === "sleep") await deleteSleep(item.id);
       else if (item.kind === "elimination") await deleteElimination(item.id);
       else if (item.kind === "shower") await deleteShower(item.id);
+      else if (item.kind === "note") await deleteNote(item.id);
       else await deleteSupplement(item.id);
       await refresh();
     } catch (e) {
@@ -294,6 +318,10 @@ export function TimelineView({ date, refreshSignal }: Props) {
         <button className="btn add-btn" onClick={() => openAdd("supplement")}>
           <span className="add-emoji">💊</span>
           <span className="add-label">{t("add.supplement")}</span>
+        </button>
+        <button className="btn add-btn" onClick={() => openAdd("note")}>
+          <span className="add-emoji">📝</span>
+          <span className="add-label">{t("add.note")}</span>
         </button>
       </div>
 
@@ -423,6 +451,20 @@ export function TimelineView({ date, refreshSignal }: Props) {
             key={editShower?.id ?? "new"}
             date={date}
             initial={editShower}
+            onSubmit={async () => {
+              closeModal();
+              await refresh();
+            }}
+            onCancel={closeModal}
+          />
+        </Modal>
+      )}
+      {modal === "note" && (
+        <Modal title={editNote ? t("note.edit") : t("note.add")} onClose={closeModal}>
+          <NoteForm
+            key={editNote?.id ?? "new"}
+            date={date}
+            initial={editNote}
             onSubmit={async () => {
               closeModal();
               await refresh();

@@ -19,6 +19,7 @@ Columns:
   - poop_size        : S / M / L (optional, leave blank if not noted).
   - poop_watery      : 1 formed / 2 middle / 3 watery (optional, leave blank if not noted).
   - supplement       : name(s), e.g. "Vitamin D" or "Vitamin D; DHA" (semicolon-separate several).
+  - remarks          : free-form note/remark for this timestamp (any text).
 
 Example — 7am with a breast feed + bottle + pee + vitamin D in ONE row:
     2026-11-01,07:00,60,29,31,5000,,,30,0,,Y,,,Vitamin D
@@ -51,6 +52,7 @@ HEADER = [
     "poop_watery",
     "shower",
     "supplement",
+    "remarks",
 ]
 
 # Old-format columns (still accepted on import for backward compatibility).
@@ -60,7 +62,7 @@ _OLD_HEADER = [
     "size", "watery", "supplement",
 ]
 
-VALID_TYPES = {"breast", "bottle", "sleep", "pee", "poop", "shower", "supplement"}
+VALID_TYPES = {"breast", "bottle", "sleep", "pee", "poop", "shower", "supplement", "note"}
 
 _DT_FORMATS = [
     "%Y-%m-%d %H:%M:%S",
@@ -200,6 +202,7 @@ def _new_group():
         "formula_ml": 0.0, "bottle_breast_ml": 0.0,
         "sleep_hours": 0.0, "pee": False, "poop": False,
         "poop_size": "", "poop_watery": "", "shower": False, "supplements": [],
+        "remarks": "",
     }
 
 
@@ -237,6 +240,10 @@ def _merge_into_group(g, kind, obj):
             g["supplements"].append(name)
     elif kind == "shower":
         g["shower"] = True
+    elif kind == "note":
+        text = (obj.get("text") or "").strip()
+        if text and not g["remarks"]:
+            g["remarks"] = text
 
 
 def _group_row(g, d, t):
@@ -257,6 +264,7 @@ def _group_row(g, d, t):
         g["poop_watery"] if g["poop"] else "",
         "Y" if g["shower"] else "",
         "; ".join(g["supplements"]),
+        g["remarks"],
     ]
 
 
@@ -278,6 +286,8 @@ def export_csv(data: dict) -> str:
         items.append((s.get("datetime", ""), "supp", s))
     for s in data.get("showers", []):
         items.append((s.get("datetime", ""), "shower", s))
+    for n in data.get("notes", []):
+        items.append((n.get("datetime", ""), "note", n))
     items.sort(key=lambda x: x[0])
 
     groups = {}
@@ -304,17 +314,19 @@ def template_csv() -> str:
     w = csv.writer(buf)
     w.writerow(HEADER)
     # 7am: breast 60 (L29/R31, before 5000g) + bottle 30ml formula + pee + vitamin D
-    w.writerow(["2026-11-01", "07:00", "60", "29", "31", "5000", "", "", "30", "0", "", "Y", "", "", "", "", "Vitamin D"])
+    w.writerow(["2026-11-01", "07:00", "60", "29", "31", "5000", "", "", "30", "0", "", "Y", "", "", "", "", "Vitamin D", ""])
     # 11:30am: 2.5h sleep
-    w.writerow(["2026-11-01", "11:30", "", "", "", "", "", "", "", "", "2.5", "", "", "", "", "", ""])
+    w.writerow(["2026-11-01", "11:30", "", "", "", "", "", "", "", "", "2.5", "", "", "", "", "", "", ""])
     # 2pm: poop, size M, watery 2
-    w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "Y", "M", "2", "", ""])
+    w.writerow(["2026-11-01", "14:00", "", "", "", "", "", "", "", "", "", "", "Y", "M", "2", "", "", ""])
     # 3pm: pee only
-    w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "Y", "", "", "", "", ""])
+    w.writerow(["2026-11-01", "15:00", "", "", "", "", "", "", "", "", "", "Y", "", "", "", "", "", ""])
     # 4pm: shower
-    w.writerow(["2026-11-01", "16:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Y", ""])
+    w.writerow(["2026-11-01", "16:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "Y", "", ""])
     # 6pm: two supplements at one time (semicolon-separated)
-    w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D; DHA"])
+    w.writerow(["2026-11-01", "18:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Vitamin D; DHA", ""])
+    # 8pm: a free-form remark/note (remarks column)
+    w.writerow(["2026-11-01", "20:00", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Mood was good, played outside"])
     return buf.getvalue()
 
 
@@ -325,7 +337,7 @@ def template_csv() -> str:
 class _Import:
     def __init__(self):
         self.records = []
-        self.imported = {"feedings": 0, "sleeps": 0, "eliminations": 0, "supplements": 0, "showers": 0}
+        self.imported = {"feedings": 0, "sleeps": 0, "eliminations": 0, "supplements": 0, "showers": 0, "notes": 0}
         self.errors = []
         self.skipped = 0
 
@@ -405,6 +417,11 @@ def _import_new_row(imp, row, i):
             if part:
                 imp.add("supplements", {"name": part, "datetime": dt})
 
+    # remarks / note (free-form text)
+    remark = (row.get("remarks") or "").strip()
+    if remark:
+        imp.add("notes", {"datetime": dt, "text": remark})
+
 
 def _import_old_row(imp, row, i):
     """One row of the OLD format (has a `type` column)."""
@@ -462,6 +479,12 @@ def _import_old_row(imp, row, i):
             imp.error(i, "supplement needs a name")
             return
         imp.add("supplements", {"name": name, "datetime": dt})
+    elif raw_type == "note":
+        text = (row.get("remarks") or row.get("note") or "").strip()
+        if not text:
+            imp.error(i, "note needs text")
+            return
+        imp.add("notes", {"datetime": dt, "text": text})
 
 
 def import_csv(text: str, clear: bool = False):

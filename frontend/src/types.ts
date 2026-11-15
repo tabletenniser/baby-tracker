@@ -101,6 +101,7 @@ export interface LogRequest {
   poopSize?: PoopSize | null;
   poopWatery?: number | null;
   shower?: boolean;
+  note?: string; // free-form remark/note
   supplements?: string[];
 }
 
@@ -113,6 +114,12 @@ export interface Supplement {
 export interface Shower {
   id: string;
   datetime: string;
+}
+
+export interface Note {
+  id: string;
+  datetime: string;
+  text: string;
 }
 
 export interface DailySummary {
@@ -135,6 +142,7 @@ export interface TimelineData {
   eliminations: Elimination[];
   supplements: Supplement[];
   showers: Shower[];
+  notes: Note[];
   daily: DailySummary;
   cutoff: string;
 }

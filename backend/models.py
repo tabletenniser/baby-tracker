@@ -99,6 +99,15 @@ class Shower(ShowerCreate):
     id: str
 
 
+class NoteCreate(BaseModel):
+    datetime: str  # local ISO
+    text: str  # free-form remark/note
+
+
+class Note(NoteCreate):
+    id: str
+
+
 class DailySummary(BaseModel):
     date: str
     breastMl: float

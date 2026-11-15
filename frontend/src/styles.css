@@ -249,6 +249,25 @@ select:focus {
   border-color: var(--primary);
 }
 
+.note-textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.4;
+}
+.note-textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  border-color: var(--primary);
+}
+
 /* Hide the up/down spinner dials on number inputs — type the value directly. */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
