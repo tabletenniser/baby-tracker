@@ -9,6 +9,7 @@ import type {
   GrowthData,
   LogRequest,
   MilkCurveData,
+  Note,
   Shower,
   Sleep,
   SleepInput,
@@ -95,6 +96,16 @@ export const updateShower = (id: string, s: { datetime: string }) =>
   request<Shower>(`/api/showers/${id}`, { method: "PUT", body: JSON.stringify(s) });
 export const deleteShower = (id: string) =>
   request<{ ok: boolean }>(`/api/showers/${id}`, { method: "DELETE" });
+
+// Notes / remarks
+export const getNotes = (date?: string) =>
+  request<Note[]>(`/api/notes${date ? `?date=${date}` : ""}`);
+export const createNote = (n: { datetime: string; text: string }) =>
+  request<Note>("/api/notes", { method: "POST", body: JSON.stringify(n) });
+export const updateNote = (id: string, n: { datetime: string; text: string }) =>
+  request<Note>(`/api/notes/${id}`, { method: "PUT", body: JSON.stringify(n) });
+export const deleteNote = (id: string) =>
+  request<{ ok: boolean }>(`/api/notes/${id}`, { method: "DELETE" });
 
 // Daily summary
 export const getDaily = (date: string) => request<DailySummary>(`/api/daily?date=${date}`);

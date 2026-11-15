@@ -45,6 +45,8 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   const [poopWatery, setPoopWatery] = useState("");
   // shower
   const [shower, setShower] = useState(false);
+  // note / remark
+  const [note, setNote] = useState("");
   // supplements (multiple allowed)
   const [suppSelected, setSuppSelected] = useState<string[]>([]);
   const [suppOther, setSuppOther] = useState("");
@@ -67,7 +69,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
   }
 
   async function submit() {
-    if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !shower && !suppList.length) {
+    if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !shower && !note.trim() && !suppList.length) {
       setError(t("log.needSomething"));
       return;
     }
@@ -95,6 +97,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
       if (poopWatery) req.poopWatery = parseInt(poopWatery, 10);
     }
     if (shower) req.shower = true;
+    if (note.trim()) req.note = note.trim();
     if (suppList.length) req.supplements = suppList;
     setSaving(true);
     setError(null);
@@ -119,6 +122,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     if (pee) items.push(t("item.pee"));
     if (poop) items.push(t("item.poop"));
     if (shower) items.push(t("item.shower"));
+    if (note.trim()) items.push(`${t("item.note")}: ${note.trim()}`);
     if (suppList.length) items.push(suppList.map((n) => supplementLabel(n, t)).join(", "));
     return items.length ? items : [t("log.nothing")];
   }
@@ -245,6 +249,23 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
             {shower && <span className="chip-check">✓</span>}
           </button>
         </div>
+      </div>
+
+      <div className="log-section">
+        <div className="log-section-head">
+          <span className="log-emoji">📝</span>
+          <span>{t("log.note")}</span>
+        </div>
+        <label className="field">
+          <span>{t("note.text")}</span>
+          <textarea
+            className="note-textarea"
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t("note.placeholder")}
+          />
+        </label>
       </div>
 
       <div className="log-section">

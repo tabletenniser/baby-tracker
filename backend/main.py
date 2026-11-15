@@ -19,6 +19,7 @@ from models import (
     DayCutoffSet,
     EliminationCreate,
     FeedingCreate,
+    NoteCreate,
     PoopSize,
     ShowerCreate,
     SleepCreate,
@@ -710,6 +711,61 @@ def delete_shower(shid: str):
     return {"ok": True}
 
 
+# --------------------------------------------------------------------------- #
+# Notes / remarks (free-form text at a timestamp)
+# --------------------------------------------------------------------------- #
+@app.get("/api/notes")
+def list_notes(date: Optional[str] = None):
+    data = store.read()
+    notes = data.get("notes", [])
+    if date:
+        notes = [n for n in notes if day_for(n["datetime"], data) == date]
+    notes = sorted(notes, key=lambda n: n["datetime"])
+    return notes
+
+
+@app.post("/api/notes")
+def create_note(n: NoteCreate):
+    nid = store.new_id()
+
+    def mut(data):
+        rec = n.model_dump()
+        rec["id"] = nid
+        data["notes"].append(rec)
+
+    store.write(mut)
+    rec = next(x for x in store.read()["notes"] if x["id"] == nid)
+    return rec
+
+
+@app.put("/api/notes/{nid}")
+def update_note(nid: str, n: NoteCreate):
+    def mut(data):
+        for i, x in enumerate(data["notes"]):
+            if x["id"] == nid:
+                rec = n.model_dump()
+                rec["id"] = nid
+                data["notes"][i] = rec
+                return
+        raise HTTPException(404, "note not found")
+
+    store.write(mut)
+    rec = next(x for x in store.read()["notes"] if x["id"] == nid)
+    return rec
+
+
+@app.delete("/api/notes/{nid}")
+def delete_note(nid: str):
+    def mut(data):
+        before = len(data["notes"])
+        data["notes"] = [x for x in data["notes"] if x["id"] != nid]
+        if len(data["notes"]) == before:
+            raise HTTPException(404, "note not found")
+
+    store.write(mut)
+    return {"ok": True}
+
+
 class LogRequest(BaseModel):
     """Log several events at one timestamp in a single request."""
     datetime: str  # local ISO, e.g. 2026-11-01T07:00
@@ -732,6 +788,8 @@ class LogRequest(BaseModel):
     poopWatery: Optional[WateryLevel] = 2
     # shower
     shower: bool = False
+    # note / remark (free-form text)
+    note: str = ""
     # supplements (names)
     supplements: Optional[List[str]] = None
 
@@ -742,7 +800,7 @@ def log_events(req: LogRequest):
 
     Returns the ids of the records created, grouped by kind.
     """
-    created = {"feedings": [], "sleeps": [], "eliminations": [], "supplements": [], "showers": []}
+    created = {"feedings": [], "sleeps": [], "eliminations": [], "supplements": [], "showers": [], "notes": []}
 
     def mut(data):
         dt = req.datetime
@@ -788,6 +846,12 @@ def log_events(req: LogRequest):
             shid = store.new_id()
             data["showers"].append({"id": shid, "datetime": dt})
             created["showers"].append(shid)
+        # note / remark
+        note_text = (req.note or "").strip()
+        if note_text:
+            nid = store.new_id()
+            data["notes"].append({"id": nid, "datetime": dt, "text": note_text})
+            created["notes"].append(nid)
         # supplements
         for name in (req.supplements or []):
             name = (name or "").strip()
@@ -837,6 +901,7 @@ def timeline(date: str):
     eliminations = [e for e in data["eliminations"] if day_for(e["datetime"], data) == date]
     supplements = [s for s in data["supplements"] if day_for(s["datetime"], data) == date]
     showers = [s for s in data.get("showers", []) if day_for(s["datetime"], data) == date]
+    notes = [n for n in data.get("notes", []) if day_for(n["datetime"], data) == date]
 
     sleeps = []
     for s in data["sleeps"]:
@@ -853,6 +918,7 @@ def timeline(date: str):
         "eliminations": sorted(eliminations, key=lambda e: e["datetime"]),
         "supplements": sorted(supplements, key=lambda s: s["datetime"]),
         "showers": sorted(showers, key=lambda s: s["datetime"]),
+        "notes": sorted(notes, key=lambda n: n["datetime"]),
         "daily": daily_summary(date, data),
         "cutoff": cutoff,
     }
@@ -1069,6 +1135,7 @@ async def import_csv_endpoint(request: Request, clear: bool = False):
             data["eliminations"] = []
             data["supplements"] = []
             data["showers"] = []
+            data["notes"] = []
         for kind, payload in records:
             payload["id"] = store.new_id()
             data[kind].append(payload)
