@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { createSupplement, updateSupplement } from "../api";
+import { createSupplement, deleteSupplement, updateSupplement } from "../api";
 import { defaultDateTime } from "../dates";
-import { SUPPLEMENT_CHOICES, supplementLabel, useLang } from "../i18n";
+import { supplementLabel, useLang } from "../i18n";
 import type { Supplement } from "../types";
 
 interface Props {
@@ -11,19 +11,38 @@ interface Props {
   onCancel: () => void;
 }
 
+const SUPP_OPTIONS = ["Vitamin D", "Probiotic", "Iron", "Vitamin C"];
+const SUPP_EMOJI: Record<string, string> = {
+  "Vitamin D": "☀️",
+  "Probiotic": "🦠",
+  "Iron": "🔩",
+  "Vitamin C": "🍊",
+};
+
 export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
   const { t } = useLang();
-  const isCustom = initial?.name ? !SUPPLEMENT_CHOICES.includes(initial.name) : false;
-  const [name, setName] = useState(initial?.name ?? "");
-  const [custom, setCustom] = useState(isCustom ? initial!.name : "");
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  // multi-select: known chips + free-form "other"
+  const [suppSelected, setSuppSelected] = useState<string[]>(() =>
+    initial?.name && SUPP_OPTIONS.includes(initial.name) ? [initial.name] : []
+  );
+  const [suppOther, setSuppOther] = useState(
+    initial?.name && !SUPP_OPTIONS.includes(initial.name) ? initial.name : ""
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const effectiveName = name === "Other" ? custom : name;
+  const suppList = [...suppSelected];
+  if (suppOther.trim()) suppList.push(suppOther.trim());
+
+  function toggleSupp(name: string) {
+    setSuppSelected((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+    );
+  }
 
   async function submit() {
-    if (!effectiveName.trim()) {
+    if (!suppList.length) {
       setError(t("supp.needName"));
       return;
     }
@@ -34,8 +53,22 @@ export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
     setSaving(true);
     setError(null);
     try {
-      if (initial) await updateSupplement(initial.id, { name: effectiveName.trim(), datetime });
-      else await createSupplement({ name: effectiveName.trim(), datetime });
+      if (initial) {
+        // Editing one existing record: repurpose it for the first selected
+        // name, create the rest, and delete it if nothing is left selected.
+        if (!suppList.length) {
+          await deleteSupplement(initial.id);
+        } else {
+          await updateSupplement(initial.id, { name: suppList[0], datetime });
+          for (const name of suppList.slice(1)) {
+            await createSupplement({ name, datetime });
+          }
+        }
+      } else {
+        for (const name of suppList) {
+          await createSupplement({ name, datetime });
+        }
+      }
       onSubmit();
     } catch (e) {
       setError(String(e));
@@ -56,25 +89,34 @@ export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
       </label>
       <div className="field">
         <span>{t("supp.name")}</span>
-        <select value={name} onChange={(e) => setName(e.target.value)}>
-          <option value="">{t("supp.choose")}</option>
-          {SUPPLEMENT_CHOICES.map((c) => (
-            <option key={c} value={c}>
-              {supplementLabel(c, t)}
-            </option>
+        <div className="log-toggles">
+          {SUPP_OPTIONS.map((name) => (
+            <button
+              type="button"
+              key={name}
+              className={`toggle-chip${suppSelected.includes(name) ? " active" : ""}`}
+              onClick={() => toggleSupp(name)}
+            >
+              <span className="log-emoji">{SUPP_EMOJI[name]}</span>
+              <span>{supplementLabel(name, t)}</span>
+              {suppSelected.includes(name) && <span className="chip-check">✓</span>}
+            </button>
           ))}
-        </select>
+        </div>
       </div>
-      {name === "Other" && (
-        <label className="field">
-          <span>{t("supp.customName")}</span>
-          <input
-            type="text"
-            value={custom}
-            onChange={(e) => setCustom(e.target.value)}
-            placeholder="…"
-          />
-        </label>
+      <label className="field">
+        <span>{t("supp.other")}</span>
+        <input
+          type="text"
+          value={suppOther}
+          onChange={(e) => setSuppOther(e.target.value)}
+          placeholder={t("supp.otherPlaceholder")}
+        />
+      </label>
+      {suppList.length > 0 && (
+        <div className="preview">
+          {suppList.map((n) => supplementLabel(n, t)).join(" · ")}
+        </div>
       )}
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
