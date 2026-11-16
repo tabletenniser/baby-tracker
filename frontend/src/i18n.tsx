@@ -173,6 +173,7 @@ const en: Record<string, string> = {
   "insights.d7": "7 days",
   "insights.d14": "14 days",
   "insights.d31": "31 days",
+  "insights.all": "All",
   "insights.custom": "Custom",
   "insights.from": "From",
   "insights.to": "To",
@@ -223,6 +224,7 @@ const en: Record<string, string> = {
   "curve.noCompare": "No data to compare yet",
   "curve.supplement": "Supplement",
   "curve.poop": "Poop",
+  "curve.now": "Now",
 
   "cutoff.label": "Day starts",
   "cutoff.override": "This day only",
@@ -409,6 +411,7 @@ const zh: Record<string, string> = {
   "insights.d7": "7 天",
   "insights.d14": "14 天",
   "insights.d31": "31 天",
+  "insights.all": "全部",
   "insights.custom": "自定义",
   "insights.from": "从",
   "insights.to": "到",
@@ -459,6 +462,7 @@ const zh: Record<string, string> = {
   "curve.noCompare": "暂无对比数据",
   "curve.supplement": "补充剂",
   "curve.poop": "大便",
+  "curve.now": "现在",
 
   "cutoff.label": "一天从",
   "cutoff.override": "仅今天",

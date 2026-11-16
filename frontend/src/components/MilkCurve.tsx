@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Scatter,
   Tooltip,
@@ -94,6 +95,10 @@ export function MilkCurve({ date }: { date: string }) {
 
   const ticks = [0, 6, 12, 18, 24];
 
+  // Vertical marker for the current time (only meaningful when viewing today).
+  const nowOffset = (Date.now() - new Date(`${date}T${cutoff}:00`).getTime()) / 3600000;
+  const showNowLine = nowOffset >= 0 && nowOffset <= 24;
+
   return (
     <section className="card">
       <h2 className="card-title">{t("curve.title")}</h2>
@@ -119,16 +124,32 @@ export function MilkCurve({ date }: { date: string }) {
               domain={[0, 24]}
               ticks={ticks}
               tickFormatter={(v) => clockAt(cutoff, Number(v))}
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 12 }}
             />
-            <YAxis tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip
-              labelFormatter={(v) => clockAt(cutoff, Number(v))}
-              formatter={(value: any, name: any) =>
-                name === "today"
-                  ? [`${value} ml`, t("curve.today")]
-                  : [`${value} ml`, compareLabel]
-              }
+              content={({ active, payload, label }) => {
+                if (!active || !payload || payload.length === 0) return null;
+                const todayItem = payload.find((p) => p.dataKey === "today");
+                const compareItem = payload.find((p) => p.dataKey === "compare");
+                return (
+                  <div className="milk-tooltip">
+                    <div className="milk-tooltip-label">{clockAt(cutoff, Number(label))}</div>
+                    {todayItem && (
+                      <div className="milk-tooltip-row">
+                        <span className="milk-dot" style={{ background: "#3d8c02" }} />
+                        {t("curve.today")}: {todayItem.value} ml
+                      </div>
+                    )}
+                    {compareItem && compareItem.value != null && (
+                      <div className="milk-tooltip-row">
+                        <span className="milk-dot" style={{ background: "#94a3b8" }} />
+                        {compareLabel}: {compareItem.value} ml
+                      </div>
+                    )}
+                  </div>
+                );
+              }}
             />
             <Line
               type="monotone"
@@ -145,6 +166,15 @@ export function MilkCurve({ date }: { date: string }) {
                 strokeWidth={2}
                 strokeDasharray="5 4"
                 dot={false}
+              />
+            )}
+            {showNowLine && (
+              <ReferenceLine
+                x={nowOffset}
+                stroke="#c53030"
+                strokeWidth={2}
+                strokeDasharray="4 3"
+                label={{ value: t("curve.now"), position: "top", fill: "#c53030", fontSize: 12 }}
               />
             )}
             <Scatter data={events} dataKey="ml" shape={eventDot} />
