@@ -6,6 +6,7 @@ import type { Supplement } from "../types";
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial: Supplement | null;
   onSubmit: () => void;
   onCancel: () => void;
@@ -19,9 +20,9 @@ const SUPP_EMOJI: Record<string, string> = {
   "Vitamin C": "🍊",
 };
 
-export function SupplementForm({ date, initial, onSubmit, onCancel }: Props) {
+export function SupplementForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
   const { t } = useLang();
-  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   // multi-select: known chips + free-form "other"
   const [suppSelected, setSuppSelected] = useState<string[]>(() =>
     initial?.name && SUPP_OPTIONS.includes(initial.name) ? [initial.name] : []

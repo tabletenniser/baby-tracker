@@ -50,12 +50,19 @@ export function addDays(dateStr: string, delta: number): string {
  * Default datetime for a form targeting `date`:
  * - today → current time
  * - other days → that day at the current time (convenient for backfilling)
+ *
+ * Cutoff-aware: a "day" runs from `cutoff` to the next day's cutoff. If the
+ * current time is before the cutoff (e.g. 1:30am with a 3am cutoff), the record
+ * belongs to the *next* calendar date, so we default to `date + 1` to keep it
+ * inside the viewed day.
  */
-export function defaultDateTime(date: string): string {
+export function defaultDateTime(date: string, cutoff = "00:00"): string {
   const now = new Date();
   const h = String(now.getHours()).padStart(2, "0");
   const mi = String(now.getMinutes()).padStart(2, "0");
-  return `${date}T${h}:${mi}`;
+  const currentHM = `${h}:${mi}`;
+  const nextDate = currentHM < cutoff ? addDays(date, 1) : date;
+  return `${nextDate}T${currentHM}`;
 }
 
 /** Exact age: "X days old" for young babies, else "X months Y days old" (EN) / 中文. */

@@ -481,6 +481,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <FeedingForm
             key={editFeeding?.id ?? "new"}
             date={date}
+            cutoff={data?.cutoff}
             initial={editFeeding}
             initialType={addType as FeedingType | undefined}
             onSubmit={async () => {
@@ -496,6 +497,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <SleepForm
             key={editSleep?.id ?? "new"}
             date={date}
+            cutoff={data?.cutoff}
             initial={editSleep}
             onSubmit={async () => {
               closeModal();
@@ -510,6 +512,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <EliminationForm
             key={editElim?.id ?? "new"}
             date={date}
+            cutoff={data?.cutoff}
             initial={editElim}
             initialType={addType as ElimType | undefined}
             onSubmit={async () => {
@@ -525,6 +528,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <SupplementForm
             key={editSupp?.id ?? "new"}
             date={date}
+            cutoff={data?.cutoff}
             initial={editSupp}
             onSubmit={async () => {
               closeModal();
@@ -539,6 +543,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <ShowerForm
             key={editShower?.id ?? "new"}
             date={date}
+            cutoff={data?.cutoff}
             initial={editShower}
             onSubmit={async () => {
               closeModal();
@@ -553,6 +558,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <NoteForm
             key={editNote?.id ?? "new"}
             date={date}
+            cutoff={data?.cutoff}
             initial={editNote}
             onSubmit={async () => {
               closeModal();
@@ -567,6 +573,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
           <LogForm
             key={logFormKey}
             date={date}
+            cutoff={data?.cutoff}
             initial={editLog}
             onSubmit={async () => {
               closeModal();

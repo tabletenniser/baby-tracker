@@ -6,20 +6,21 @@ import type { Sleep, SleepInput, SleepMode } from "../types";
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial: Sleep | null;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
-export function SleepForm({ date, initial, onSubmit, onCancel }: Props) {
+export function SleepForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
   const { lang, t } = useLang();
   const [mode, setMode] = useState<SleepMode>(initial?.mode ?? "duration_end");
   const [startTime, setStartTime] = useState(() => {
     if (initial?.startTime) return initial.startTime;
-    const end = new Date(defaultDateTime(date));
+    const end = new Date(defaultDateTime(date, cutoff));
     return toLocalDateTime(new Date(end.getTime() - 3 * 3600 * 1000));
   });
-  const [endTime, setEndTime] = useState(initial?.endTime ?? defaultDateTime(date));
+  const [endTime, setEndTime] = useState(initial?.endTime ?? defaultDateTime(date, cutoff));
   const [durationHours, setDurationHours] = useState(
     initial?.durationHours != null ? String(initial.durationHours) : "3"
   );
