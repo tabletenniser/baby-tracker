@@ -1,18 +1,18 @@
 :root {
-  --bg-1: #f7fbe8;
-  --bg-2: #eaf7d8;
+  --bg-1: #faf8f1;
+  --bg-2: #f1ecdd;
   --card: #ffffff;
   --ink: #33401f;
   --muted: #5f6b4a;
-  --line: #c9dca8;
+  --line: #ddd5bf;
   --primary: #3d8c02;
   --primary-dark: #2e6b02;
-  --primary-soft: #e8f8d8;
+  --primary-soft: #f1ecdd;
   --accent: #2563eb;
   --ok: #2e7d5a;
   --danger: #c53030;
   --radius: 16px;
-  --shadow: 0 6px 20px rgba(60, 90, 20, 0.10);
+  --shadow: 0 6px 20px rgba(120, 100, 60, 0.10);
   --tap: 44px;
 }
 
@@ -295,7 +295,7 @@ input[type="number"] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  background: #f0f8e2;
+  background: #f1ecdd;
   padding: 5px;
   border-radius: 12px;
   margin-bottom: 14px;
@@ -327,7 +327,7 @@ input[type="number"] {
   padding: 10px 16px;
   min-height: var(--tap);
   cursor: pointer;
-  background: #c9dca8;
+  background: #ddd5bf;
   color: var(--ink);
   transition: transform 0.05s ease, background 0.15s ease;
 }
@@ -376,7 +376,7 @@ input[type="number"] {
 
 /* Preview */
 .preview {
-  background: #f0f6e4;
+  background: #f1ecdd;
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.9rem;
@@ -471,7 +471,7 @@ input[type="number"] {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  background: #f0f8e2;
+  background: #f1ecdd;
   color: var(--muted);
 }
 .vitamin-toggle.on {
@@ -872,7 +872,7 @@ input[type="number"] {
   border-bottom: none;
 }
 .timeline-item.overnight {
-  background: linear-gradient(90deg, #eaf7d8, transparent);
+  background: linear-gradient(90deg, #f1ecdd, transparent);
   border-radius: 10px;
 }
 .timeline-time {
@@ -920,7 +920,7 @@ input[type="number"] {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(51, 64, 31, 0.45);
+  background: rgba(60, 50, 30, 0.45);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1055,7 +1055,7 @@ input[type="number"] {
 
 /* Summary: highlighted total + supplement names */
 .stat-total {
-  background: linear-gradient(135deg, var(--primary-soft), #e8f8d8);
+  background: linear-gradient(135deg, var(--primary-soft), #f1ecdd);
   border: 1px solid var(--primary);
 }
 .stat-supps {
