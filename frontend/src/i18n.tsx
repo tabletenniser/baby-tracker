@@ -209,14 +209,14 @@ const en: Record<string, string> = {
 
   "trend.title": "🥛 Feeding trend",
   "trend.today": "Today",
-  "trend.yesterday": "Yesterday",
+  "trend.yesterday": "Prior day",
   "trend.avg7": "7-day avg",
   "trend.avg14": "14-day avg",
   "trend.soFar": "so far",
 
   "curve.title": "🥛 Milk over the day",
   "curve.today": "Today",
-  "curve.yesterday": "Yesterday",
+  "curve.yesterday": "Prior day",
   "curve.avg3": "3-day avg",
   "curve.avg7": "7-day avg",
   "curve.avg14": "14-day avg",
@@ -445,14 +445,14 @@ const zh: Record<string, string> = {
 
   "trend.title": "🥛 喂奶趋势",
   "trend.today": "今天",
-  "trend.yesterday": "昨天",
+  "trend.yesterday": "前一天",
   "trend.avg7": "7天平均",
   "trend.avg14": "14天平均",
   "trend.soFar": "目前",
 
   "curve.title": "🥛 全天奶量",
   "curve.today": "今天",
-  "curve.yesterday": "昨天",
+  "curve.yesterday": "前一天",
   "curve.avg3": "3天平均",
   "curve.avg7": "7天平均",
   "curve.avg14": "14天平均",
