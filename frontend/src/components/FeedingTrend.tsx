@@ -87,12 +87,12 @@ export function FeedingTrend({ date }: { date: string }) {
             {avg7 > 0 && (
               <ReferenceLine
                 y={Math.round(avg7)}
-                stroke="#46a302"
+                stroke="#2e6b02"
                 strokeDasharray="4 4"
                 label={{ value: t("trend.avg7"), position: "insideBottomRight", fontSize: 10, fill: "#3a5a1a" }}
               />
             )}
-            <Bar dataKey="total" fill="#c9f0a0" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="#8fd400" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
