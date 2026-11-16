@@ -70,18 +70,18 @@ export function FeedingTrend({ date }: { date: string }) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 12 }}
               interval="preserveStartEnd"
               minTickGap={16}
             />
-            <YAxis tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip formatter={(v: any) => [`${v} ml`, ""]} />
             {avg14 > 0 && (
               <ReferenceLine
                 y={Math.round(avg14)}
                 stroke="#94a3b8"
                 strokeDasharray="4 4"
-                label={{ value: t("trend.avg14"), position: "insideTopRight", fontSize: 10, fill: "#64748b" }}
+                label={{ value: t("trend.avg14"), position: "insideTopRight", fontSize: 12, fill: "#64748b" }}
               />
             )}
             {avg7 > 0 && (
@@ -89,7 +89,7 @@ export function FeedingTrend({ date }: { date: string }) {
                 y={Math.round(avg7)}
                 stroke="#2e6b02"
                 strokeDasharray="4 4"
-                label={{ value: t("trend.avg7"), position: "insideBottomRight", fontSize: 10, fill: "#3a5a1a" }}
+                label={{ value: t("trend.avg7"), position: "insideBottomRight", fontSize: 12, fill: "#3a5a1a" }}
               />
             )}
             <Bar dataKey="total" fill="#8fd400" radius={[4, 4, 0, 0]} />

@@ -126,11 +126,11 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
               type="number"
               domain={[minAge, maxAge]}
               tickFormatter={(v) => `${v}mo`}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 13 }}
             />
             <YAxis
               domain={["auto", "auto"]}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 13 }}
               tickFormatter={(v) => `${v}kg`}
             />
             <Line data={toXY(curves.p3)} dataKey="y" name="3rd" stroke="#c9dca8" dot={false} strokeWidth={1} isAnimationActive={false} />

@@ -131,7 +131,7 @@ export default function App() {
         {tab === "timeline" ? (
           <TimelineView date={date} refreshSignal={refreshSignal} />
         ) : (
-          <InsightsView refreshSignal={refreshSignal} />
+          <InsightsView refreshSignal={refreshSignal} birthday={baby.birthday} />
         )}
       </main>
 

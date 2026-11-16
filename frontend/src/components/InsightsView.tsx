@@ -20,7 +20,7 @@ import { useLang } from "../i18n";
 import type { CountPoint, GrowthData, HourPoint, MilkPoint, StatsData } from "../types";
 import { GrowthChart } from "./GrowthChart";
 
-type Range = "7" | "14" | "31" | "custom";
+type Range = "7" | "14" | "31" | "all" | "custom";
 
 // Shared clickable-legend state: clicking a legend item hides/shows that series.
 function useToggleSeries() {
@@ -67,9 +67,9 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
-            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis yAxisId="ml" tick={{ fontSize: 11 }} />
-            <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} width={38} />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 13 }} interval="preserveStartEnd" />
+            <YAxis yAxisId="ml" tick={{ fontSize: 13 }} />
+            <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 13 }} width={38} />
             <Tooltip
               formatter={(v: any, name: any) =>
                 name === t("insights.breastPct") ? `${v}%` : `${Math.round(Number(v))} ml`
@@ -112,8 +112,8 @@ function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
-            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 13 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 13 }} />
             <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
             <Legend onClick={onLegendClick} formatter={formatter} />
             <Bar dataKey="left" stackId="a" fill="#3d8c02" name={t("insights.left")} hide={hidden.has("left")} />
@@ -141,8 +141,8 @@ function SleepChart({ data }: { data: HourPoint[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
-            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 13 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 13 }} />
             <Tooltip formatter={(v: any) => formatHours(Number(v), lang)} />
             <Legend onClick={onLegendClick} formatter={formatter} />
             <Area type="monotone" dataKey="hours" stroke="#2563eb" fill="url(#sleepGrad)" name={t("insights.sleep")} hide={hidden.has("hours")} />
@@ -168,8 +168,8 @@ function EliminationChart({ pee, poop }: { pee: CountPoint[]; poop: CountPoint[]
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
-            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 13 }} interval="preserveStartEnd" />
+            <YAxis allowDecimals={false} tick={{ fontSize: 13 }} />
             <Tooltip />
             <Legend onClick={onLegendClick} formatter={formatter} />
             <Bar dataKey="pee" fill="#2563eb" name={t("insights.pee")} hide={hidden.has("pee")} radius={[4, 4, 0, 0]} />
@@ -181,12 +181,12 @@ function EliminationChart({ pee, poop }: { pee: CountPoint[]; poop: CountPoint[]
   );
 }
 
-export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
+export function InsightsView({ refreshSignal, birthday }: { refreshSignal?: number; birthday?: string }) {
   const { t } = useLang();
   const today = todayStr();
   const [range, setRange] = useState<Range>(() => {
     const r = getUrlParam("range");
-    return r === "7" || r === "14" || r === "31" || r === "custom" ? r : "14";
+    return r === "7" || r === "14" || r === "31" || r === "all" || r === "custom" ? r : "all";
   });
   const [customStart, setCustomStart] = useState(() => {
     const d = getUrlParam("from");
@@ -215,7 +215,12 @@ export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
     }
   }, [range, customStart, customEnd]);
 
-  const start = range === "custom" ? customStart : addDays(today, -(parseInt(range, 10) - 1));
+  const start =
+    range === "custom"
+      ? customStart
+      : range === "all"
+      ? birthday || addDays(today, -364)
+      : addDays(today, -(parseInt(range, 10) - 1));
   const end = range === "custom" ? customEnd : today;
 
   useEffect(() => {
@@ -241,6 +246,7 @@ export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
     "7": t("insights.d7"),
     "14": t("insights.d14"),
     "31": t("insights.d31"),
+    all: t("insights.all"),
     custom: t("insights.custom"),
   };
 
@@ -249,7 +255,7 @@ export function InsightsView({ refreshSignal }: { refreshSignal?: number }) {
       <section className="card">
         <h2 className="card-title">{t("insights.range")}</h2>
         <div className="range-tabs">
-          {(["7", "14", "31", "custom"] as const).map((r) => (
+          {(["7", "14", "31", "all", "custom"] as const).map((r) => (
             <button key={r} className={range === r ? "active" : ""} onClick={() => setRange(r)}>
               {rangeLabel[r]}
             </button>
