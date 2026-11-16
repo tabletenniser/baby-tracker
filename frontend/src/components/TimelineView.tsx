@@ -247,6 +247,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
   const [editShower, setEditShower] = useState<Shower | null>(null);
   const [editNote, setEditNote] = useState<Note | null>(null);
   const [editLog, setEditLog] = useState<LogInitial | null>(null);
+  const [logFormKey, setLogFormKey] = useState(0);
   const [addType, setAddType] = useState<FeedingType | ElimType | null>(null);
   const [hiddenCats, setHiddenCats] = useState<Set<Cat>>(new Set());
 
@@ -302,6 +303,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditNote(null);
     setEditLog(null);
     setAddType(addType ?? null);
+    if (kind === "log") setLogFormKey((k) => k + 1);
     setModal(kind);
   }
 
@@ -310,6 +312,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     // Multiple events at one timestamp: edit them together via the "log at a time" form.
     if (group.items.length > 1) {
       setEditLog(buildLogInitial(group, data));
+      setLogFormKey((k) => k + 1);
       setModal("log");
       return;
     }
@@ -358,7 +361,10 @@ export function TimelineView({ date, refreshSignal }: Props) {
 
   const items = data ? buildItems(data, t, lang) : [];
   const groups = buildGroups(items);
-  const visibleGroups = groups.filter((g) => g.items.some((it) => !hiddenCats.has(it.cat)));
+  // Filter individual events within each group; drop groups with no visible events.
+  const visibleGroups = groups
+    .map((g) => ({ ...g, items: g.items.filter((it) => !hiddenCats.has(it.cat)) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <>
@@ -559,7 +565,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
       {modal === "log" && (
         <Modal title={t("log.title")} onClose={closeModal}>
           <LogForm
-            key={editLog?.datetime ?? "new"}
+            key={logFormKey}
             date={date}
             initial={editLog}
             onSubmit={async () => {
