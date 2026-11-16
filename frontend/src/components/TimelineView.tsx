@@ -15,6 +15,7 @@ import type {
   ElimType,
   Feeding,
   FeedingType,
+  LogInitial,
   Note,
   Shower,
   Sleep,
@@ -172,6 +173,64 @@ function buildItems(data: TimelineData, t: T, lang: "en" | "zh"): Item[] {
   return items;
 }
 
+/** A group of events that share the same timestamp, shown as one row. */
+interface Group {
+  key: string;
+  sortTime: string;
+  displayTime: string;
+  items: Item[];
+}
+
+function buildGroups(items: Item[]): Group[] {
+  const groups: Group[] = [];
+  for (const it of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.sortTime === it.sortTime) {
+      last.items.push(it);
+    } else {
+      groups.push({ key: it.sortTime, sortTime: it.sortTime, displayTime: it.displayTime, items: [it] });
+    }
+  }
+  return groups;
+}
+
+/** Collect the records at one timestamp to pre-populate the "log at a time" form. */
+function buildLogInitial(group: Group, data: TimelineData): LogInitial {
+  const init: LogInitial = { datetime: group.sortTime };
+  for (const item of group.items) {
+    if (item.kind === "feeding") {
+      const f = data.feedings.find((x) => x.id === item.id);
+      if (!f) continue;
+      if (f.type === "breast") init.breast = f;
+      else init.bottle = f;
+    } else if (item.kind === "sleep") {
+      init.sleep = data.sleeps.find((x) => x.id === item.id) ?? null;
+    } else if (item.kind === "elimination") {
+      const e = data.eliminations.find((x) => x.id === item.id);
+      if (!e) continue;
+      if (e.type === "pee") init.pee = true;
+      else init.poop = e;
+    } else if (item.kind === "supplement") {
+      const s = data.supplements.find((x) => x.id === item.id);
+      if (s) init.supplements = [...(init.supplements ?? []), s.name];
+    } else if (item.kind === "shower") {
+      init.shower = true;
+    } else if (item.kind === "note") {
+      const n = data.notes.find((x) => x.id === item.id);
+      if (n) init.note = n.text;
+    }
+  }
+  init.deleteIds = {
+    feedings: group.items.filter((i) => i.kind === "feeding").map((i) => i.id),
+    sleeps: group.items.filter((i) => i.kind === "sleep").map((i) => i.id),
+    eliminations: group.items.filter((i) => i.kind === "elimination").map((i) => i.id),
+    supplements: group.items.filter((i) => i.kind === "supplement").map((i) => i.id),
+    showers: group.items.filter((i) => i.kind === "shower").map((i) => i.id),
+    notes: group.items.filter((i) => i.kind === "note").map((i) => i.id),
+  };
+  return init;
+}
+
 interface Props {
   date: string;
   refreshSignal?: number;
@@ -187,6 +246,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
   const [editSupp, setEditSupp] = useState<Supplement | null>(null);
   const [editShower, setEditShower] = useState<Shower | null>(null);
   const [editNote, setEditNote] = useState<Note | null>(null);
+  const [editLog, setEditLog] = useState<LogInitial | null>(null);
   const [addType, setAddType] = useState<FeedingType | ElimType | null>(null);
   const [hiddenCats, setHiddenCats] = useState<Set<Cat>>(new Set());
 
@@ -218,6 +278,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditSupp(null);
     setEditShower(null);
     setEditNote(null);
+    setEditLog(null);
     setAddType(null);
     (async () => {
       try {
@@ -239,12 +300,21 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditSupp(null);
     setEditShower(null);
     setEditNote(null);
+    setEditLog(null);
     setAddType(addType ?? null);
     setModal(kind);
   }
 
-  function openEdit(item: Item) {
+  function openEdit(group: Group) {
     if (!data) return;
+    // Multiple events at one timestamp: edit them together via the "log at a time" form.
+    if (group.items.length > 1) {
+      setEditLog(buildLogInitial(group, data));
+      setModal("log");
+      return;
+    }
+    const item = group.items[0];
+    setEditLog(null);
     if (item.kind === "feeding") setEditFeeding(data.feedings.find((f) => f.id === item.id) ?? null);
     else if (item.kind === "sleep") setEditSleep(data.sleeps.find((s) => s.id === item.id) ?? null);
     else if (item.kind === "elimination")
@@ -265,18 +335,21 @@ export function TimelineView({ date, refreshSignal }: Props) {
     setEditSupp(null);
     setEditShower(null);
     setEditNote(null);
+    setEditLog(null);
     setAddType(null);
   }
 
-  async function handleDelete(item: Item) {
+  async function handleDelete(group: Group) {
     if (!confirm(t("common.confirmDelete"))) return;
     try {
-      if (item.kind === "feeding") await deleteFeeding(item.id);
-      else if (item.kind === "sleep") await deleteSleep(item.id);
-      else if (item.kind === "elimination") await deleteElimination(item.id);
-      else if (item.kind === "shower") await deleteShower(item.id);
-      else if (item.kind === "note") await deleteNote(item.id);
-      else await deleteSupplement(item.id);
+      for (const item of group.items) {
+        if (item.kind === "feeding") await deleteFeeding(item.id);
+        else if (item.kind === "sleep") await deleteSleep(item.id);
+        else if (item.kind === "elimination") await deleteElimination(item.id);
+        else if (item.kind === "shower") await deleteShower(item.id);
+        else if (item.kind === "note") await deleteNote(item.id);
+        else await deleteSupplement(item.id);
+      }
       await refresh();
     } catch (e) {
       alert(String(e));
@@ -284,7 +357,8 @@ export function TimelineView({ date, refreshSignal }: Props) {
   }
 
   const items = data ? buildItems(data, t, lang) : [];
-  const visibleItems = items.filter((it) => !hiddenCats.has(it.cat));
+  const groups = buildGroups(items);
+  const visibleGroups = groups.filter((g) => g.items.some((it) => !hiddenCats.has(it.cat)));
 
   return (
     <>
@@ -357,24 +431,33 @@ export function TimelineView({ date, refreshSignal }: Props) {
           )}
         </div>
         <div className="timeline">
-          {visibleItems.length === 0 && (
+          {visibleGroups.length === 0 && (
             <div className="empty">
               {hiddenCats.size > 0 ? t("filter.noneShown") : t("item.noActivity")}
             </div>
           )}
-          {visibleItems.map((it) => (
-            <div className={`timeline-item ${it.overnight ? "overnight" : ""}`} key={it.key}>
-              <div className="timeline-time">{it.displayTime}</div>
-              <div className="timeline-icon">{it.icon}</div>
-              <div className="timeline-main">
-                <div className="timeline-title">{it.title}</div>
-                {it.detail && <div className="timeline-detail">{it.detail}</div>}
+          {visibleGroups.map((g) => (
+            <div
+              className={`timeline-item group${g.items.some((i) => i.overnight) ? " overnight" : ""}`}
+              key={g.key}
+            >
+              <div className="timeline-time">{g.displayTime}</div>
+              <div className="timeline-events">
+                {g.items.map((it) => (
+                  <div className="timeline-event" key={it.key}>
+                    <div className="timeline-icon">{it.icon}</div>
+                    <div className="timeline-main">
+                      <div className="timeline-title">{it.title}</div>
+                      {it.detail && <div className="timeline-detail">{it.detail}</div>}
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="list-actions">
-                <button className="btn ghost sm" onClick={() => openEdit(it)}>
+                <button className="btn ghost sm" onClick={() => openEdit(g)}>
                   {t("item.edit")}
                 </button>
-                <button className="btn ghost sm danger" onClick={() => handleDelete(it)}>
+                <button className="btn ghost sm danger" onClick={() => handleDelete(g)}>
                   ✕
                 </button>
               </div>
@@ -476,7 +559,9 @@ export function TimelineView({ date, refreshSignal }: Props) {
       {modal === "log" && (
         <Modal title={t("log.title")} onClose={closeModal}>
           <LogForm
+            key={editLog?.datetime ?? "new"}
             date={date}
+            initial={editLog}
             onSubmit={async () => {
               closeModal();
               await refresh();

@@ -122,6 +122,31 @@ export interface Note {
   text: string;
 }
 
+/**
+ * The events at one timestamp, used to pre-populate the "log at a time" form
+ * when editing a merged timeline row. On save the old records (deleteIds) are
+ * removed and the (possibly changed) set is re-created at `datetime`.
+ */
+export interface LogInitial {
+  datetime: string;
+  breast?: Feeding | null;
+  bottle?: Feeding | null;
+  sleep?: Sleep | null;
+  pee?: boolean;
+  poop?: Elimination | null;
+  shower?: boolean;
+  supplements?: string[];
+  note?: string;
+  deleteIds?: {
+    feedings: string[];
+    sleeps: string[];
+    eliminations: string[];
+    supplements: string[];
+    showers: string[];
+    notes: string[];
+  };
+}
+
 export interface DailySummary {
   date: string;
   breastMl: number;

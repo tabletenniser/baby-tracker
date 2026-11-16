@@ -13,18 +13,20 @@ interface WeightRow {
 function computeBreast(rows: { weight: number; side: Side }[]) {
   let left = 0;
   let right = 0;
+  let total = 0;
   let prev: number | null = null;
   for (const w of rows) {
     if (prev !== null) {
       const delta = w.weight - prev;
       if (delta > 0) {
+        total += delta;
         if (w.side === "left") left += delta;
         else if (w.side === "right") right += delta;
       }
     }
     prev = w.weight;
   }
-  return { left, right, total: left + right };
+  return { left, right, total };
 }
 
 interface Props {
