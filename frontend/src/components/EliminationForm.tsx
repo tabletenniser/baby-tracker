@@ -6,15 +6,16 @@ import type { Elimination, EliminationInput, ElimType, PoopSize } from "../types
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial: Elimination | null;
   initialType?: ElimType;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
-export function EliminationForm({ date, initial, initialType, onSubmit, onCancel }: Props) {
+export function EliminationForm({ date, cutoff, initial, initialType, onSubmit, onCancel }: Props) {
   const { t } = useLang();
-  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   const [type, setType] = useState<ElimType>(initial?.type ?? initialType ?? "pee");
   const [size, setSize] = useState<PoopSize | "">(initial?.size ?? "");
   const [watery, setWatery] = useState<string>(initial?.watery != null ? String(initial.watery) : "");

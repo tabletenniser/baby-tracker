@@ -52,14 +52,15 @@ function computeBreast(rows: { weight: number; side: Side }[]) {
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial?: LogInitial | null;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
-export function LogForm({ date, initial, onSubmit, onCancel }: Props) {
+export function LogForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
   const { lang, t } = useLang();
-  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   // breast (multi-weight, like the feeding form)
   const [weights, setWeights] = useState<WeightRow[]>(() => {
     if (initial?.breast?.weights?.length) {

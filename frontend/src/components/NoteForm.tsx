@@ -6,14 +6,15 @@ import type { Note } from "../types";
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial: Note | null;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
-export function NoteForm({ date, initial, onSubmit, onCancel }: Props) {
+export function NoteForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
   const { t } = useLang();
-  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   const [text, setText] = useState(initial?.text ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

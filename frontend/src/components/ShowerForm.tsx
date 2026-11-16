@@ -6,14 +6,15 @@ import type { Shower } from "../types";
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial: Shower | null;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
-export function ShowerForm({ date, initial, onSubmit, onCancel }: Props) {
+export function ShowerForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
   const { t } = useLang();
-  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 

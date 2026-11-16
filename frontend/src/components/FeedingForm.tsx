@@ -31,15 +31,16 @@ function computeBreast(rows: { weight: number; side: Side }[]) {
 
 interface Props {
   date: string;
+  cutoff?: string;
   initial: Feeding | null;
   initialType?: FeedingType;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
-export function FeedingForm({ date, initial, initialType, onSubmit, onCancel }: Props) {
+export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onCancel }: Props) {
   const { t } = useLang();
-  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   const [type, setType] = useState<FeedingType>(initial?.type ?? initialType ?? "breast");
   const [weights, setWeights] = useState<WeightRow[]>(() => {
     if (initial && initial.type === "breast") {
