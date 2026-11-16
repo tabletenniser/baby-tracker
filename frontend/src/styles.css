@@ -3,14 +3,14 @@
   --bg-2: #eaf7d8;
   --card: #ffffff;
   --ink: #33401f;
-  --muted: #7d8a6a;
-  --line: #dcecc0;
-  --primary: #58cc02;
-  --primary-dark: #46a302;
+  --muted: #5f6b4a;
+  --line: #c9dca8;
+  --primary: #3d8c02;
+  --primary-dark: #2e6b02;
   --primary-soft: #e8f8d8;
-  --accent: #6aa9ff;
-  --ok: #4caf7d;
-  --danger: #e05656;
+  --accent: #2563eb;
+  --ok: #2e7d5a;
+  --danger: #c53030;
   --radius: 16px;
   --shadow: 0 6px 20px rgba(60, 90, 20, 0.10);
   --tap: 44px;
@@ -327,7 +327,7 @@ input[type="number"] {
   padding: 10px 16px;
   min-height: var(--tap);
   cursor: pointer;
-  background: #dcecc0;
+  background: #c9dca8;
   color: var(--ink);
   transition: transform 0.05s ease, background 0.15s ease;
 }
@@ -998,10 +998,10 @@ input[type="number"] {
   color: #fff;
 }
 .balance-chip.left {
-  background: #58cc02;
+  background: #3d8c02;
 }
 .balance-chip.right {
-  background: #c9f0a0;
+  background: #8fd400;
   color: #3a5a1a;
 }
 .growth-latest {

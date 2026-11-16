@@ -66,7 +66,7 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis yAxisId="ml" tick={{ fontSize: 11 }} />
             <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} width={38} />
@@ -76,9 +76,9 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
               }
             />
             <Legend onClick={onLegendClick} formatter={formatter} />
-            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#58cc02" name={t("insights.breast")} hide={hidden.has("breast")} />
-            <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} hide={hidden.has("formula")} />
-            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#3a8a00" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} hide={hidden.has("breastPct")} />
+            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#3d8c02" name={t("insights.breast")} hide={hidden.has("breast")} />
+            <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#2563eb" name={t("insights.formula")} hide={hidden.has("formula")} />
+            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#2e6b02" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} hide={hidden.has("breastPct")} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -111,13 +111,13 @@ function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
             <Legend onClick={onLegendClick} formatter={formatter} />
-            <Bar dataKey="left" stackId="a" fill="#58cc02" name={t("insights.left")} hide={hidden.has("left")} />
-            <Bar dataKey="right" stackId="a" fill="#c9f0a0" name={t("insights.right")} hide={hidden.has("right")} />
+            <Bar dataKey="left" stackId="a" fill="#3d8c02" name={t("insights.left")} hide={hidden.has("left")} />
+            <Bar dataKey="right" stackId="a" fill="#8fd400" name={t("insights.right")} hide={hidden.has("right")} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -136,16 +136,16 @@ function SleepChart({ data }: { data: HourPoint[] }) {
           <AreaChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
             <defs>
               <linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6aa9ff" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#6aa9ff" stopOpacity={0} />
+                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => formatHours(Number(v), lang)} />
             <Legend onClick={onLegendClick} formatter={formatter} />
-            <Area type="monotone" dataKey="hours" stroke="#6aa9ff" fill="url(#sleepGrad)" name={t("insights.sleep")} hide={hidden.has("hours")} />
+            <Area type="monotone" dataKey="hours" stroke="#2563eb" fill="url(#sleepGrad)" name={t("insights.sleep")} hide={hidden.has("hours")} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -167,12 +167,12 @@ function EliminationChart({ pee, poop }: { pee: CountPoint[]; poop: CountPoint[]
       <div className="chart">
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#c9dca8" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend onClick={onLegendClick} formatter={formatter} />
-            <Bar dataKey="pee" fill="#6aa9ff" name={t("insights.pee")} hide={hidden.has("pee")} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="pee" fill="#2563eb" name={t("insights.pee")} hide={hidden.has("pee")} radius={[4, 4, 0, 0]} />
             <Bar dataKey="poop" fill="#8a6a3a" name={t("insights.poop")} hide={hidden.has("poop")} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

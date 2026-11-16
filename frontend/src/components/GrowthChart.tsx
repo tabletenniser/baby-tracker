@@ -120,7 +120,7 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
       >
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={measurements} margin={{ top: 10, right: 12, left: -8, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#dcecc0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#c9dca8" />
             <XAxis
               dataKey="x"
               type="number"
@@ -133,11 +133,11 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
               tick={{ fontSize: 11 }}
               tickFormatter={(v) => `${v}kg`}
             />
-            <Line data={toXY(curves.p3)} dataKey="y" name="3rd" stroke="#e0edc8" dot={false} strokeWidth={1} isAnimationActive={false} />
+            <Line data={toXY(curves.p3)} dataKey="y" name="3rd" stroke="#c9dca8" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Line data={toXY(curves.p15)} dataKey="y" name="15th" stroke="#a6e84c" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#46a302" dot={false} strokeWidth={2} isAnimationActive={false} />
+            <Line data={toXY(curves.p50)} dataKey="y" name="50th" stroke="#2e6b02" dot={false} strokeWidth={2} isAnimationActive={false} />
             <Line data={toXY(curves.p85)} dataKey="y" name="85th" stroke="#a6e84c" dot={false} strokeWidth={1} isAnimationActive={false} />
-            <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#e0edc8" dot={false} strokeWidth={1} isAnimationActive={false} />
+            <Line data={toXY(curves.p97)} dataKey="y" name="97th" stroke="#c9dca8" dot={false} strokeWidth={1} isAnimationActive={false} />
             <Scatter data={measurements} dataKey="y" shape={renderDot} fill="#33401f" name={t("growth.baby")} isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
@@ -159,9 +159,9 @@ export function GrowthChart({ growth, start, end }: { growth: GrowthData; start:
         )}
       </div>
       <div className="growth-legend">
-        <span><i style={{ background: "#46a302" }} /> {t("growth.p50")}</span>
+        <span><i style={{ background: "#2e6b02" }} /> {t("growth.p50")}</span>
         <span><i style={{ background: "#a6e84c" }} /> {t("growth.p1585")}</span>
-        <span><i style={{ background: "#e0edc8" }} /> {t("growth.p397")}</span>
+        <span><i style={{ background: "#c9dca8" }} /> {t("growth.p397")}</span>
         <span><i style={{ background: "#33401f" }} /> ● {t("growth.baby")}</span>
       </div>
       <div className="muted small" style={{ marginTop: 8 }}>
