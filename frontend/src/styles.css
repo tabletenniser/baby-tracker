@@ -899,6 +899,19 @@ input[type="number"] {
   font-size: 0.83rem;
   color: var(--muted);
 }
+/* Merged rows: multiple events sharing one timestamp */
+.timeline-events {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.timeline-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 /* ------------------------------------------------------------- Modal */
 .modal-overlay {

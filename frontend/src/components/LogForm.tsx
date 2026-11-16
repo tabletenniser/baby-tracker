@@ -1,63 +1,112 @@
 import { useState } from "react";
-import { logEvents } from "../api";
+import {
+  logEvents,
+  deleteFeeding,
+  deleteSleep,
+  deleteElimination,
+  deleteSupplement,
+  deleteShower,
+  deleteNote,
+} from "../api";
 import { defaultDateTime, formatMl } from "../dates";
 import { supplementLabel, useLang } from "../i18n";
-import type { LogRequest, PoopSize } from "../types";
+import type { LogRequest, PoopSize, Side, LogInitial } from "../types";
 
-interface Props {
-  date: string;
-  onSubmit: () => void;
-  onCancel: () => void;
-}
+const SUPP_OPTIONS = ["Vitamin D", "Probiotic", "Iron", "Vitamin C"];
+const SUPP_EMOJI: Record<string, string> = {
+  "Vitamin D": "☀️",
+  Probiotic: "🦠",
+  Iron: "🔩",
+  "Vitamin C": "🍊",
+};
 
 const num = (s: string): number | null => {
   const v = parseFloat(s);
   return s.trim() !== "" && !isNaN(v) ? v : null;
 };
 
-const SUPP_OPTIONS = ["Vitamin D", "Probiotic", "Iron", "Vitamin C"];
-const SUPP_EMOJI: Record<string, string> = {
-  "Vitamin D": "☀️",
-  "Probiotic": "🦠",
-  "Iron": "🔩",
-  "Vitamin C": "🍊",
-};
+interface WeightRow {
+  weight: string;
+  side: Side;
+  time: string;
+}
 
-export function LogForm({ date, onSubmit, onCancel }: Props) {
+/** Compute left/right/total ml from a sequence of weights (first = before).
+ *  Matches the backend: total = sum of all positive deltas; left/right only
+ *  count deltas whose entry side is left/right (N/A deltas count toward total only).
+ */
+function computeBreast(rows: { weight: number; side: Side }[]) {
+  let left = 0;
+  let right = 0;
+  let total = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const delta = rows[i].weight - rows[i - 1].weight;
+    if (delta > 0) {
+      total += delta;
+      if (rows[i].side === "left") left += delta;
+      else if (rows[i].side === "right") right += delta;
+    }
+  }
+  return { left, right, total };
+}
+
+interface Props {
+  date: string;
+  initial?: LogInitial | null;
+  onSubmit: () => void;
+  onCancel: () => void;
+}
+
+export function LogForm({ date, initial, onSubmit, onCancel }: Props) {
   const { lang, t } = useLang();
-  const [datetime, setDatetime] = useState(defaultDateTime(date));
-  // breast
-  const [breastMl, setBreastMl] = useState("");
-  const [leftMl, setLeftMl] = useState("");
-  const [rightMl, setRightMl] = useState("");
-  const [beforeWeight, setBeforeWeight] = useState("");
-  const [leftTime, setLeftTime] = useState("");
-  const [rightTime, setRightTime] = useState("");
+  const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date));
+  // breast (multi-weight, like the feeding form)
+  const [weights, setWeights] = useState<WeightRow[]>(() => {
+    if (initial?.breast?.weights?.length) {
+      return initial.breast.weights.map((w) => ({
+        weight: w.weight != null ? String(w.weight) : "",
+        side: w.side,
+        time: w.time ?? "",
+      }));
+    }
+    return [];
+  });
   // bottle
-  const [formulaMl, setFormulaMl] = useState("");
-  const [bottleBreastMl, setBottleBreastMl] = useState("");
+  const [formulaMl, setFormulaMl] = useState(
+    initial?.bottle?.bottleFormulaMl != null ? String(initial.bottle.bottleFormulaMl) : ""
+  );
+  const [bottleBreastMl, setBottleBreastMl] = useState(
+    initial?.bottle?.bottleBreastMl != null ? String(initial.bottle.bottleBreastMl) : ""
+  );
   // sleep
-  const [sleepHours, setSleepHours] = useState("");
+  const [sleepHours, setSleepHours] = useState(initial?.sleep ? String(initial.sleep.hours) : "");
   // pee / poop
-  const [pee, setPee] = useState(false);
-  const [poop, setPoop] = useState(false);
-  const [poopSize, setPoopSize] = useState<PoopSize | "">("");
-  const [poopWatery, setPoopWatery] = useState("");
+  const [pee, setPee] = useState(!!initial?.pee);
+  const [poop, setPoop] = useState(!!initial?.poop);
+  const [poopSize, setPoopSize] = useState<PoopSize | "">(initial?.poop?.size ?? "");
+  const [poopWatery, setPoopWatery] = useState(
+    initial?.poop?.watery != null ? String(initial.poop.watery) : ""
+  );
   // shower
-  const [shower, setShower] = useState(false);
+  const [shower, setShower] = useState(!!initial?.shower);
   // note / remark
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(initial?.note ?? "");
   // supplements (multiple allowed)
-  const [suppSelected, setSuppSelected] = useState<string[]>([]);
-  const [suppOther, setSuppOther] = useState("");
+  const [suppSelected, setSuppSelected] = useState<string[]>(() =>
+    (initial?.supplements ?? []).filter((n) => SUPP_OPTIONS.includes(n))
+  );
+  const [suppOther, setSuppOther] = useState(() =>
+    (initial?.supplements ?? []).find((n) => !SUPP_OPTIONS.includes(n)) ?? ""
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const bTotal = num(breastMl);
-  const bLeft = num(leftMl);
-  const bRight = num(rightMl);
-  const bBefore = num(beforeWeight);
-  const hasBreast = bTotal != null || bLeft != null || bRight != null || bBefore != null;
+  // Valid weights: drop empty/unparseable entries, then treat the first as "before" (na).
+  const validWeights = weights
+    .filter((w) => w.weight.trim() !== "" && !isNaN(parseFloat(w.weight)))
+    .map((w, i) => ({ weight: parseFloat(w.weight), side: i === 0 ? ("na" as Side) : w.side }));
+  const preview = computeBreast(validWeights);
+  const hasBreast = validWeights.length > 0;
   const hasBottle = num(formulaMl) != null || num(bottleBreastMl) != null;
   const hasSleep = num(sleepHours) != null;
 
@@ -68,6 +117,16 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     setSuppSelected((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
   }
 
+  function addWeight() {
+    setWeights((prev) => [...prev, { weight: "", side: "left", time: "" }]);
+  }
+  function setWeight(i: number, patch: Partial<WeightRow>) {
+    setWeights((prev) => prev.map((w, idx) => (idx === i ? { ...w, ...patch } : w)));
+  }
+  function removeWeight(i: number) {
+    setWeights((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
   async function submit() {
     if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !shower && !note.trim() && !suppList.length) {
       setError(t("log.needSomething"));
@@ -75,15 +134,17 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     }
     const req: LogRequest = { datetime };
     if (hasBreast) {
-      if (bLeft != null || bRight != null) {
-        req.leftMl = bLeft ?? 0;
-        req.rightMl = bRight ?? 0;
+      if (preview.left > 0 || preview.right > 0) {
+        req.leftMl = preview.left;
+        req.rightMl = preview.right;
       } else {
-        req.breastMl = bTotal ?? 0;
+        req.breastMl = preview.total;
       }
-      if (bBefore != null) req.beforeWeight = bBefore;
-      if (leftTime) req.leftTime = leftTime;
-      if (rightTime) req.rightTime = rightTime;
+      if (validWeights.length > 0) req.beforeWeight = validWeights[0].weight;
+      const leftW = weights.find((w) => w.side === "left");
+      const rightW = weights.find((w) => w.side === "right");
+      if (leftW?.time) req.leftTime = leftW.time;
+      if (rightW?.time) req.rightTime = rightW.time;
     }
     if (hasBottle) {
       req.formulaMl = num(formulaMl) ?? 0;
@@ -102,6 +163,16 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
     setSaving(true);
     setError(null);
     try {
+      // Edit mode: replace the old records at this timestamp with the new set.
+      const ids = initial?.deleteIds;
+      if (ids) {
+        for (const id of ids.feedings) await deleteFeeding(id);
+        for (const id of ids.sleeps) await deleteSleep(id);
+        for (const id of ids.eliminations) await deleteElimination(id);
+        for (const id of ids.supplements) await deleteSupplement(id);
+        for (const id of ids.showers) await deleteShower(id);
+        for (const id of ids.notes) await deleteNote(id);
+      }
       await logEvents(req);
       onSubmit();
     } catch (e) {
@@ -113,10 +184,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
 
   function previewItems(): string[] {
     const items: string[] = [];
-    if (hasBreast) {
-      const total = bLeft != null || bRight != null ? (bLeft ?? 0) + (bRight ?? 0) : bTotal ?? 0;
-      items.push(`${t("item.breast")} ${formatMl(total, lang)}`);
-    }
+    if (hasBreast) items.push(`${t("item.breast")} ${formatMl(preview.total, lang)}`);
     if (hasBottle) items.push(t("item.bottle"));
     if (hasSleep) items.push(`${t("item.sleep")} ${num(sleepHours) ?? 0}h`);
     if (pee) items.push(t("item.pee"));
@@ -134,44 +202,82 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
         <input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)} />
       </label>
 
+      {/* Breast (multi-weight) */}
       <div className="log-section">
         <div className="log-section-head">
           <span className="log-emoji">🤱</span>
           <span>{t("log.breast")}</span>
         </div>
-        <div className="row-3">
-          <label className="field">
-            <span>{t("log.breastTotal")}</span>
-            <input type="number" inputMode="decimal" value={breastMl} onChange={(e) => setBreastMl(e.target.value)} />
-          </label>
-          <label className="field">
-            <span>{t("feeding.left")}</span>
-            <input type="number" inputMode="decimal" value={leftMl} onChange={(e) => setLeftMl(e.target.value)} />
-          </label>
-          <label className="field">
-            <span>{t("feeding.right")}</span>
-            <input type="number" inputMode="decimal" value={rightMl} onChange={(e) => setRightMl(e.target.value)} />
-          </label>
-        </div>
-        <div className="row-2">
-          <label className="field">
-            <span>{t("log.breastBefore")}</span>
-            <input type="number" inputMode="decimal" value={beforeWeight} onChange={(e) => setBeforeWeight(e.target.value)} />
-          </label>
-          <div className="row-2">
-            <label className="field">
-              <span>{t("log.leftTime")}</span>
-              <input type="time" value={leftTime} onChange={(e) => setLeftTime(e.target.value)} />
-            </label>
-            <label className="field">
-              <span>{t("log.rightTime")}</span>
-              <input type="time" value={rightTime} onChange={(e) => setRightTime(e.target.value)} />
-            </label>
+        {weights.length === 0 ? (
+          <button type="button" className="btn ghost" onClick={addWeight}>
+            {t("feeding.addWeight")}
+          </button>
+        ) : (
+          <div className="weights">
+            <div className="weights-head">
+              <span>{t("feeding.weight")}</span>
+              <span>{t("feeding.side")}</span>
+              <span>{t("feeding.timeCol")}</span>
+            </div>
+            {weights.map((w, i) => (
+              <div className="weight-row" key={i}>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={i === 0 ? t("feeding.before") : t("feeding.after")}
+                  value={w.weight}
+                  onChange={(e) => setWeight(i, { weight: e.target.value })}
+                />
+                {i === 0 ? (
+                  <span className="side-na">{t("feeding.before")}</span>
+                ) : (
+                  <select
+                    value={w.side}
+                    onChange={(e) => setWeight(i, { side: e.target.value as Side })}
+                  >
+                    <option value="left">{t("feeding.left")}</option>
+                    <option value="right">{t("feeding.right")}</option>
+                    <option value="na">{t("feeding.na")}</option>
+                  </select>
+                )}
+                {i === 0 ? (
+                  <span className="time-cell" />
+                ) : (
+                  <input
+                    type="time"
+                    value={w.time || ""}
+                    onChange={(e) => setWeight(i, { time: e.target.value })}
+                    title={t("feeding.timeTitle")}
+                  />
+                )}
+                <button
+                  type="button"
+                  className="btn icon danger"
+                  onClick={() => removeWeight(i)}
+                  disabled={weights.length <= 1}
+                  aria-label={t("common.remove")}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button type="button" className="btn ghost" onClick={addWeight}>
+              {t("feeding.addWeight")}
+            </button>
+            {preview.total > 0 && (
+              <div className="preview">
+                {t("feeding.left")} <b>{Math.round(preview.left)} ml</b> ·{" "}
+                {t("feeding.right")} <b>{Math.round(preview.right)} ml</b> ·{" "}
+                <span className="total">
+                  {t("item.total")} {Math.round(preview.total)} ml
+                </span>
+              </div>
+            )}
           </div>
-        </div>
-        <div className="hint">{t("log.breastHint")}</div>
+        )}
       </div>
 
+      {/* Bottle */}
       <div className="log-section">
         <div className="log-section-head">
           <span className="log-emoji">🍼</span>
@@ -189,6 +295,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
         </div>
       </div>
 
+      {/* Sleep */}
       <div className="log-section">
         <div className="log-section-head">
           <span className="log-emoji">😴</span>
@@ -200,6 +307,7 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
         </label>
       </div>
 
+      {/* Pee / Poop */}
       <div className="log-section">
         <div className="log-toggles">
           <button type="button" className={`toggle-chip${pee ? " active" : ""}`} onClick={() => setPee(!pee)}>
@@ -237,11 +345,8 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
         )}
       </div>
 
+      {/* Shower */}
       <div className="log-section">
-        <div className="log-section-head">
-          <span className="log-emoji">🚿</span>
-          <span>{t("log.shower")}</span>
-        </div>
         <div className="log-toggles">
           <button type="button" className={`toggle-chip${shower ? " active" : ""}`} onClick={() => setShower(!shower)}>
             <span className="log-emoji">🚿</span>
@@ -251,23 +356,23 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
         </div>
       </div>
 
+      {/* Note */}
       <div className="log-section">
         <div className="log-section-head">
           <span className="log-emoji">📝</span>
           <span>{t("log.note")}</span>
         </div>
-        <label className="field">
-          <span>{t("note.text")}</span>
+        <div className="field">
           <textarea
             className="note-textarea"
-            rows={2}
+            placeholder={t("note.placeholder")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={t("note.placeholder")}
           />
-        </label>
+        </div>
       </div>
 
+      {/* Supplements */}
       <div className="log-section">
         <div className="log-section-head">
           <span className="log-emoji">💊</span>
@@ -276,31 +381,36 @@ export function LogForm({ date, onSubmit, onCancel }: Props) {
         <div className="log-toggles">
           {SUPP_OPTIONS.map((name) => (
             <button
-              type="button"
               key={name}
+              type="button"
               className={`toggle-chip${suppSelected.includes(name) ? " active" : ""}`}
               onClick={() => toggleSupp(name)}
             >
-              <span className="log-emoji">{SUPP_EMOJI[name]}</span>
-              <span>{supplementLabel(name, t)}</span>
+              {SUPP_EMOJI[name]} {name}
               {suppSelected.includes(name) && <span className="chip-check">✓</span>}
             </button>
           ))}
         </div>
-        <label className="field">
-          <span>{t("supp.other")}</span>
-          <input type="text" value={suppOther} onChange={(e) => setSuppOther(e.target.value)} placeholder={t("supp.otherPlaceholder")} />
-        </label>
+        <div className="field">
+          <label>{t("supp.other")}</label>
+          <input
+            type="text"
+            placeholder={t("supp.otherPlaceholder")}
+            value={suppOther}
+            onChange={(e) => setSuppOther(e.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="preview">
-        {t("log.willLog", { items: previewItems().join(" · ") })}
-      </div>
-
+      {previewItems().length > 0 && (
+        <div className="preview">
+          {t("log.willLog", { items: previewItems().join(" · ") })}
+        </div>
+      )}
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
-        <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "…" : t("log.save")}
+        <button className="btn primary" disabled={saving} onClick={submit}>
+          {initial ? t("common.save") : t("log.save")}
         </button>
         <button className="btn ghost" onClick={onCancel}>
           {t("common.cancel")}
