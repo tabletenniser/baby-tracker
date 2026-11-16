@@ -41,7 +41,7 @@ function useToggleSeries() {
     return (
       <span
         style={{
-          color: isHidden ? "#c9c2b0" : "#3d3420",
+          color: isHidden ? "#c9c2b0" : "#33401f",
           textDecoration: isHidden ? "line-through" : "none",
           cursor: "pointer",
         }}
@@ -66,7 +66,7 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis yAxisId="ml" tick={{ fontSize: 11 }} />
             <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} width={38} />
@@ -76,9 +76,9 @@ function MilkChart({ data }: { data: MilkPoint[] }) {
               }
             />
             <Legend onClick={onLegendClick} formatter={formatter} />
-            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#f5a623" name={t("insights.breast")} hide={hidden.has("breast")} />
+            <Bar yAxisId="ml" dataKey="breast" stackId="a" fill="#58cc02" name={t("insights.breast")} hide={hidden.has("breast")} />
             <Bar yAxisId="ml" dataKey="formula" stackId="a" fill="#6aa9ff" name={t("insights.formula")} hide={hidden.has("formula")} />
-            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#c98a00" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} hide={hidden.has("breastPct")} />
+            <Line yAxisId="pct" type="monotone" dataKey="breastPct" stroke="#3a8a00" strokeWidth={2} dot={{ r: 2.5 }} connectNulls={false} name={t("insights.breastPct")} hide={hidden.has("breastPct")} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -111,13 +111,13 @@ function BreastBalanceChart({ data }: { data: MilkPoint[] }) {
       <div className="chart">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => `${Math.round(Number(v))} ml`} />
             <Legend onClick={onLegendClick} formatter={formatter} />
-            <Bar dataKey="left" stackId="a" fill="#f5a623" name={t("insights.left")} hide={hidden.has("left")} />
-            <Bar dataKey="right" stackId="a" fill="#ffd98a" name={t("insights.right")} hide={hidden.has("right")} />
+            <Bar dataKey="left" stackId="a" fill="#58cc02" name={t("insights.left")} hide={hidden.has("left")} />
+            <Bar dataKey="right" stackId="a" fill="#c9f0a0" name={t("insights.right")} hide={hidden.has("right")} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -140,7 +140,7 @@ function SleepChart({ data }: { data: HourPoint[] }) {
                 <stop offset="95%" stopColor="#6aa9ff" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: any) => formatHours(Number(v), lang)} />
@@ -167,13 +167,13 @@ function EliminationChart({ pee, poop }: { pee: CountPoint[]; poop: CountPoint[]
       <div className="chart">
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={rows} margin={{ top: 5, right: 5, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3e6c8" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcecc0" />
             <XAxis dataKey="date" tickFormatter={(d: string) => prettyDate(d, lang)} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend onClick={onLegendClick} formatter={formatter} />
             <Bar dataKey="pee" fill="#6aa9ff" name={t("insights.pee")} hide={hidden.has("pee")} radius={[4, 4, 0, 0]} />
-            <Bar dataKey="poop" fill="#c9a227" name={t("insights.poop")} hide={hidden.has("poop")} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="poop" fill="#8a6a3a" name={t("insights.poop")} hide={hidden.has("poop")} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

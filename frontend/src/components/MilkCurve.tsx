@@ -133,7 +133,7 @@ export function MilkCurve({ date }: { date: string }) {
             <Line
               type="monotone"
               dataKey="today"
-              stroke="#f5a623"
+              stroke="#58cc02"
               strokeWidth={2.5}
               dot={false}
             />
@@ -153,7 +153,7 @@ export function MilkCurve({ date }: { date: string }) {
       </div>
       <div className="curve-legend">
         <span className="legend-item">
-          <span className="legend-line" style={{ background: "#f5a623" }} />
+          <span className="legend-line" style={{ background: "#58cc02" }} />
           {t("curve.today")}
         </span>
         {hasCompare ? (

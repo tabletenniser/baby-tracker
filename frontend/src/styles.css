@@ -1,18 +1,18 @@
 :root {
-  --bg-1: #fffdf5;
-  --bg-2: #fff6dd;
+  --bg-1: #f7fbe8;
+  --bg-2: #eaf7d8;
   --card: #ffffff;
-  --ink: #3d3420;
-  --muted: #8a8270;
-  --line: #f3e6c8;
-  --primary: #f5a623;
-  --primary-dark: #d98e04;
-  --primary-soft: #fff3d6;
+  --ink: #33401f;
+  --muted: #7d8a6a;
+  --line: #dcecc0;
+  --primary: #58cc02;
+  --primary-dark: #46a302;
+  --primary-soft: #e8f8d8;
   --accent: #6aa9ff;
   --ok: #4caf7d;
   --danger: #e05656;
   --radius: 16px;
-  --shadow: 0 6px 20px rgba(150, 110, 20, 0.10);
+  --shadow: 0 6px 20px rgba(60, 90, 20, 0.10);
   --tap: 44px;
 }
 
@@ -295,7 +295,7 @@ input[type="number"] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  background: #fbf3e0;
+  background: #f0f8e2;
   padding: 5px;
   border-radius: 12px;
   margin-bottom: 14px;
@@ -327,7 +327,7 @@ input[type="number"] {
   padding: 10px 16px;
   min-height: var(--tap);
   cursor: pointer;
-  background: #f3e6c8;
+  background: #dcecc0;
   color: var(--ink);
   transition: transform 0.05s ease, background 0.15s ease;
 }
@@ -376,7 +376,7 @@ input[type="number"] {
 
 /* Preview */
 .preview {
-  background: #f7f2e8;
+  background: #f0f6e4;
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.9rem;
@@ -471,7 +471,7 @@ input[type="number"] {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  background: #fbf3e0;
+  background: #f0f8e2;
   color: var(--muted);
 }
 .vitamin-toggle.on {
@@ -872,7 +872,7 @@ input[type="number"] {
   border-bottom: none;
 }
 .timeline-item.overnight {
-  background: linear-gradient(90deg, #fff6dd, transparent);
+  background: linear-gradient(90deg, #eaf7d8, transparent);
   border-radius: 10px;
 }
 .timeline-time {
@@ -920,7 +920,7 @@ input[type="number"] {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(61, 52, 32, 0.45);
+  background: rgba(51, 64, 31, 0.45);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -998,11 +998,11 @@ input[type="number"] {
   color: #fff;
 }
 .balance-chip.left {
-  background: #f5a623;
+  background: #58cc02;
 }
 .balance-chip.right {
-  background: #ffd98a;
-  color: #7a5a1a;
+  background: #c9f0a0;
+  color: #3a5a1a;
 }
 .growth-latest {
   font-size: 1rem;
@@ -1055,7 +1055,7 @@ input[type="number"] {
 
 /* Summary: highlighted total + supplement names */
 .stat-total {
-  background: linear-gradient(135deg, var(--primary-soft), #fff3d6);
+  background: linear-gradient(135deg, var(--primary-soft), #e8f8d8);
   border: 1px solid var(--primary);
 }
 .stat-supps {
