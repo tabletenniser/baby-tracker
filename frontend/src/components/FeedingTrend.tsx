@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getStats } from "../api";
-import { addDays, prettyDate, todayStr } from "../dates";
+import { addDays, prettyDate } from "../dates";
 import { useLang } from "../i18n";
 import type { StatsData } from "../types";
 import {
@@ -16,16 +16,16 @@ import {
 
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 
-/** Feeding trend: today vs yesterday vs 7-day / 14-day averages, with a 14-day bar chart. */
-export function FeedingTrend() {
+/** Feeding trend: selected day vs prior day vs 7-day / 14-day averages, with a 14-day bar chart. Anchored to the selected date (like the milk curve). */
+export function FeedingTrend({ date }: { date: string }) {
   const { lang, t } = useLang();
   const [stats, setStats] = useState<StatsData | null>(null);
 
   useEffect(() => {
-    const end = todayStr();
+    const end = date;
     const start = addDays(end, -13);
     getStats(start, end).then(setStats).catch(console.error);
-  }, []);
+  }, [date]);
 
   if (!stats) return null;
 

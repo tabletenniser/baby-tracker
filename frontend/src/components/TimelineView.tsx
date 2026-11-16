@@ -474,7 +474,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
 
       <MilkCurve date={date} />
 
-      <FeedingTrend />
+      <FeedingTrend date={date} />
 
       {modal === "feeding" && (
         <Modal title={editFeeding ? t("feeding.edit") : t("feeding.add")} onClose={closeModal}>
