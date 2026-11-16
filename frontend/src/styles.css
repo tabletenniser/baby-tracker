@@ -899,18 +899,21 @@ input[type="number"] {
   font-size: 0.83rem;
   color: var(--muted);
 }
-/* Merged rows: multiple events sharing one timestamp */
+/* Merged rows: multiple events sharing one timestamp, laid out as sub-columns */
 .timeline-events {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: flex-start;
 }
 .timeline-event {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
 }
 
 /* ------------------------------------------------------------- Modal */
