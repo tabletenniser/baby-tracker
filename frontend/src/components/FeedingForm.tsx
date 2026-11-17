@@ -35,10 +35,11 @@ interface Props {
   initial: Feeding | null;
   initialType?: FeedingType;
   onSubmit: () => void;
+  onSaved?: () => void;
   onCancel: () => void;
 }
 
-export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onCancel }: Props) {
+export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSaved, onCancel }: Props) {
   const { t } = useLang();
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   const [type, setType] = useState<FeedingType>(initial?.type ?? initialType ?? "breast");
@@ -63,6 +64,10 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onCa
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Id of a feeding created by "Save" in this dialog session, so later
+  // saves update the same record instead of creating duplicates.
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const recordId = initial?.id ?? createdId;
 
   const preview = useMemo(() => {
     if (type === "breast") {
@@ -90,7 +95,7 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onCa
     setWeights((ws) => ws.filter((_, idx) => idx !== i));
   }
 
-  async function submit() {
+  async function doSave(exit: boolean) {
     if (!datetime) {
       setError(t("feeding.needTime"));
       return;
@@ -116,9 +121,14 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onCa
     setSaving(true);
     setError(null);
     try {
-      if (initial) await updateFeeding(initial.id, input);
-      else await createFeeding(input);
-      onSubmit();
+      if (recordId) {
+        await updateFeeding(recordId, input);
+      } else {
+        const created = await createFeeding(input);
+        setCreatedId(created.id);
+      }
+      if (exit) onSubmit();
+      else onSaved?.();
     } catch (e) {
       setError(String(e));
     } finally {
@@ -245,14 +255,15 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onCa
 
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
-        <button className="btn primary" onClick={submit} disabled={saving}>
-          {saving ? "…" : initial ? t("feeding.edit") : t("feeding.add")}
+        <button className="btn primary" onClick={() => doSave(false)} disabled={saving}>
+          {saving ? "…" : t("common.save")}
         </button>
-        {initial && (
-          <button className="btn ghost" onClick={onCancel}>
-            {t("common.cancel")}
-          </button>
-        )}
+        <button className="btn exit" onClick={() => doSave(true)} disabled={saving}>
+          {t("feeding.saveExit")}
+        </button>
+        <button className="btn ghost" onClick={onCancel}>
+          {t("common.cancel")}
+        </button>
       </div>
     </div>
   );

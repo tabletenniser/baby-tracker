@@ -488,6 +488,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
               closeModal();
               await refresh();
             }}
+            onSaved={refresh}
             onCancel={closeModal}
           />
         </Modal>

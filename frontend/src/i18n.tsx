@@ -82,6 +82,7 @@ const en: Record<string, string> = {
 
   "feeding.add": "Add feeding",
   "feeding.edit": "Edit feeding",
+  "feeding.saveExit": "Save and exit",
   "feeding.type": "Type",
   "feeding.breast": "Breast",
   "feeding.bottle": "Bottle",
@@ -320,6 +321,7 @@ const zh: Record<string, string> = {
 
   "feeding.add": "添加喂奶",
   "feeding.edit": "编辑喂奶",
+  "feeding.saveExit": "保存并退出",
   "feeding.type": "类型",
   "feeding.breast": "母乳",
   "feeding.bottle": "奶瓶",

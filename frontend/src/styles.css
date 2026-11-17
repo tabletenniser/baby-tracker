@@ -377,6 +377,10 @@ input[type="number"] {
 .form-actions .btn.primary {
   flex: 1;
 }
+.form-actions .btn.exit {
+  flex: 1;
+  white-space: nowrap;
+}
 
 /* Preview */
 .preview {
