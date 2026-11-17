@@ -10,6 +10,7 @@ const en: Record<string, string> = {
   "tab.insights": "📊 Insights",
   "nav.prev": "Previous day",
   "nav.next": "Next day",
+  "nav.today": "Today",
   "lang.toggle": "EN",
 
   "summary.title": "Totals",
@@ -249,6 +250,7 @@ const zh: Record<string, string> = {
   "tab.insights": "📊 统计",
   "nav.prev": "前一天",
   "nav.next": "后一天",
+  "nav.today": "今天",
   "lang.toggle": "中文",
 
   "summary.title": "今日汇总",

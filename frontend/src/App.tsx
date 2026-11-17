@@ -109,6 +109,13 @@ export default function App() {
           >
             ›
           </button>
+          <button
+            className={`btn today-btn${date === todayStr() ? " active" : ""}`}
+            onClick={() => setDate(todayStr())}
+            aria-label={t("nav.today")}
+          >
+            {t("nav.today")}
+          </button>
         </div>
         <button
           className="btn icon data-toggle"

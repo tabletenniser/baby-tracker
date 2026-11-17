@@ -164,6 +164,19 @@ h2 {
   color: var(--ink);
   min-height: var(--tap);
 }
+.today-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.today-btn.active {
+  opacity: 0.5;
+  cursor: default;
+}
 
 .content {
   display: flex;
