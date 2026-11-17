@@ -377,6 +377,10 @@ input[type="number"] {
 .form-actions .btn.primary {
   flex: 1;
 }
+.form-actions .btn.exit {
+  flex: 1;
+  white-space: nowrap;
+}
 
 /* Preview */
 .preview {
@@ -614,6 +618,17 @@ input[type="number"] {
 }
 
 /* ------------------------------------------------------------- Add bar */
+/* Sticky wrapper: keeps the add buttons + log button visible below the
+   topbar while scrolling the timeline. Background matches the page
+   gradient (fixed attachment) so it blends in when stuck. */
+.add-sticky {
+  position: sticky;
+  top: var(--topbar-h, 64px);
+  z-index: 9;
+  margin: 0 -12px;
+  padding: 10px 12px 12px;
+  background: linear-gradient(160deg, var(--bg-1), var(--bg-2)) fixed;
+}
 .add-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
@@ -650,6 +665,14 @@ input[type="number"] {
   }
   .add-label {
     font-size: 0.68rem;
+  }
+}
+
+@media (min-width: 600px) {
+  .add-sticky {
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 

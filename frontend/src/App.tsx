@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getBaby } from "./api";
 import { addDays, ageLabel, todayStr } from "./dates";
 import { useLang } from "./i18n";
@@ -27,6 +27,21 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [showData, setShowData] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const topbarRef = useRef<HTMLElement>(null);
+
+  // Expose the topbar height as a CSS var so the timeline's add-bar can
+  // stick directly below it (the topbar wraps to two rows on narrow screens).
+  const ready = !loading && !!baby && !!baby.birthday;
+  useEffect(() => {
+    const el = topbarRef.current;
+    if (!el) return;
+    const update = () =>
+      document.documentElement.style.setProperty("--topbar-h", `${el.offsetHeight}px`);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ready]);
 
   // Keep the current view in the URL so it can be copied/shared.
   useEffect(() => {
@@ -61,7 +76,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="topbar">
+      <header className="topbar" ref={topbarRef}>
         <div className="topbar-left">
           <span className="topbar-emoji">🍼</span>
           <div>
