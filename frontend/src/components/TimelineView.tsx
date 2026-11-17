@@ -370,6 +370,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
     <>
       {data && <DailySummaryCard daily={data.daily} />}
 
+      <div className="add-sticky">
       <div className="add-bar">
         <button className="btn add-btn" onClick={() => openAdd("feeding", "breast")}>
           <span className="add-emoji">🤱</span>
@@ -408,6 +409,7 @@ export function TimelineView({ date, refreshSignal }: Props) {
       <button className="btn log-btn" onClick={() => openAdd("log")}>
         ⏱️ {t("add.log")}
       </button>
+      </div>
 
       <div className="filter-bar">
         <span className="filter-label">{t("filter.title")}</span>
