@@ -168,6 +168,8 @@ h2 {
   font-size: 0.8rem;
   font-weight: 600;
   padding: 8px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
   background: var(--primary-soft);
   color: var(--primary);
 }
