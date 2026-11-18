@@ -178,6 +178,37 @@ h2 {
   cursor: default;
 }
 
+/* Mobile: two-row topbar — name + toggles on top, date nav full-width below.
+   The date input shrinks to the remaining space instead of dominating the row. */
+@media (max-width: 599px) {
+  .topbar {
+    gap: 8px 10px;
+  }
+  .data-toggle {
+    margin-left: auto;
+  }
+  .date-nav {
+    order: 3;
+    width: 100%;
+  }
+  .date-input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Very narrow phones: tighten the date row so the date text fits */
+@media (max-width: 359px) {
+  .date-nav .btn.icon {
+    width: 38px;
+    font-size: 1.2rem;
+  }
+  .date-input {
+    font-size: 0.82rem;
+    padding: 8px 8px;
+  }
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -204,11 +235,11 @@ h2 {
   gap: 8px;
 }
 
-/* Summary — single row of 7 stats */
+/* Summary — 2 rows of 4 on phones, single row on wider screens */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 8px 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 .stat {
   background: var(--primary-soft);
