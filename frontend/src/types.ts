@@ -122,6 +122,16 @@ export interface Note {
   text: string;
 }
 
+/** Ids of the records created by a single "log at a time" save, grouped by kind. */
+export interface LogCreatedIds {
+  feedings: string[];
+  sleeps: string[];
+  eliminations: string[];
+  supplements: string[];
+  showers: string[];
+  notes: string[];
+}
+
 /**
  * The events at one timestamp, used to pre-populate the "log at a time" form
  * when editing a merged timeline row. On save the old records (deleteIds) are
