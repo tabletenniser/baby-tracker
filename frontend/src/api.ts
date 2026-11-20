@@ -7,6 +7,7 @@ import type {
   Feeding,
   FeedingInput,
   GrowthData,
+  LogCreatedIds,
   LogRequest,
   MilkCurveData,
   Note,
@@ -112,7 +113,7 @@ export const getDaily = (date: string) => request<DailySummary>(`/api/daily?date
 
 // Log several events at one timestamp
 export const logEvents = (req: LogRequest) =>
-  request<{ ok: boolean; created: Record<string, string[]> }>("/api/log", {
+  request<{ ok: boolean; created: LogCreatedIds }>("/api/log", {
     method: "POST",
     body: JSON.stringify(req),
   });

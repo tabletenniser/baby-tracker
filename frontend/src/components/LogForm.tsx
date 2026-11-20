@@ -10,7 +10,7 @@ import {
 } from "../api";
 import { defaultDateTime, formatMl } from "../dates";
 import { supplementLabel, useLang } from "../i18n";
-import type { LogRequest, PoopSize, Side, LogInitial } from "../types";
+import type { LogCreatedIds, LogRequest, PoopSize, Side, LogInitial } from "../types";
 
 const SUPP_OPTIONS = ["Vitamin D", "Probiotic", "Iron", "Vitamin C"];
 const SUPP_EMOJI: Record<string, string> = {
@@ -24,6 +24,34 @@ const num = (s: string): number | null => {
   const v = parseFloat(s);
   return s.trim() !== "" && !isNaN(v) ? v : null;
 };
+
+const emptyIds = (): LogCreatedIds => ({
+  feedings: [],
+  sleeps: [],
+  eliminations: [],
+  supplements: [],
+  showers: [],
+  notes: [],
+});
+
+function mergeIds(target: LogCreatedIds, src?: LogCreatedIds) {
+  if (!src) return;
+  target.feedings.push(...src.feedings);
+  target.sleeps.push(...src.sleeps);
+  target.eliminations.push(...src.eliminations);
+  target.supplements.push(...src.supplements);
+  target.showers.push(...src.showers);
+  target.notes.push(...src.notes);
+}
+
+async function deleteIds(ids: LogCreatedIds) {
+  for (const id of ids.feedings) await deleteFeeding(id);
+  for (const id of ids.sleeps) await deleteSleep(id);
+  for (const id of ids.eliminations) await deleteElimination(id);
+  for (const id of ids.supplements) await deleteSupplement(id);
+  for (const id of ids.showers) await deleteShower(id);
+  for (const id of ids.notes) await deleteNote(id);
+}
 
 interface WeightRow {
   weight: string;
@@ -55,10 +83,11 @@ interface Props {
   cutoff?: string;
   initial?: LogInitial | null;
   onSubmit: () => void;
+  onSaved?: () => void;
   onCancel: () => void;
 }
 
-export function LogForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
+export function LogForm({ date, cutoff, initial, onSubmit, onSaved, onCancel }: Props) {
   const { lang, t } = useLang();
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   // breast (multi-weight, like the feeding form)
@@ -101,6 +130,11 @@ export function LogForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Create mode: ids of records created per timestamp in this session, so a
+  // repeated "Save" at the same time replaces instead of duplicating.
+  const [createdByTime, setCreatedByTime] = useState<Record<string, LogCreatedIds>>({});
+  // Edit mode: ids of the group currently being edited (null until first save).
+  const [editIds, setEditIds] = useState<LogCreatedIds | null>(null);
 
   // Valid weights: drop empty/unparseable entries, then treat the first as "before" (na).
   const validWeights = weights
@@ -128,7 +162,7 @@ export function LogForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
     setWeights((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  async function submit() {
+  async function doSave(exit: boolean) {
     if (!hasBreast && !hasBottle && !hasSleep && !pee && !poop && !shower && !note.trim() && !suppList.length) {
       setError(t("log.needSomething"));
       return;
@@ -164,18 +198,20 @@ export function LogForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
     setSaving(true);
     setError(null);
     try {
-      // Edit mode: replace the old records at this timestamp with the new set.
-      const ids = initial?.deleteIds;
-      if (ids) {
-        for (const id of ids.feedings) await deleteFeeding(id);
-        for (const id of ids.sleeps) await deleteSleep(id);
-        for (const id of ids.eliminations) await deleteElimination(id);
-        for (const id of ids.supplements) await deleteSupplement(id);
-        for (const id of ids.showers) await deleteShower(id);
-        for (const id of ids.notes) await deleteNote(id);
-      }
-      await logEvents(req);
-      onSubmit();
+      // Replace the records this save is responsible for: in edit mode the group
+      // being edited (initial.deleteIds, then the ids we created); in create mode
+      // any records we previously created at this exact timestamp.
+      const toDelete = emptyIds();
+      if (initial) mergeIds(toDelete, editIds ?? initial.deleteIds);
+      else mergeIds(toDelete, createdByTime[datetime]);
+      await deleteIds(toDelete);
+
+      const res = await logEvents(req);
+      if (initial) setEditIds(res.created);
+      else setCreatedByTime((prev) => ({ ...prev, [datetime]: res.created }));
+
+      if (exit) onSubmit();
+      else onSaved?.();
     } catch (e) {
       setError(String(e));
     } finally {
@@ -410,8 +446,11 @@ export function LogForm({ date, cutoff, initial, onSubmit, onCancel }: Props) {
       )}
       {error && <div className="error">{error}</div>}
       <div className="form-actions">
-        <button className="btn primary" disabled={saving} onClick={submit}>
-          {initial ? t("common.save") : t("log.save")}
+        <button className="btn primary" onClick={() => doSave(false)} disabled={saving}>
+          {saving ? "…" : t("common.save")}
+        </button>
+        <button className="btn exit" onClick={() => doSave(true)} disabled={saving}>
+          {t("log.saveExit")}
         </button>
         <button className="btn ghost" onClick={onCancel}>
           {t("common.cancel")}
