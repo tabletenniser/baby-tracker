@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFeeding, updateFeeding } from "../api";
+import { createFeeding, deleteFeeding, updateFeeding } from "../api";
 import { defaultDateTime } from "../dates";
 import { useLang } from "../i18n";
 import type { Feeding, FeedingInput, FeedingType, Side } from "../types";
@@ -41,6 +41,7 @@ interface Props {
 
 export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSaved, onCancel }: Props) {
   const { t } = useLang();
+  const isNew = !initial;
   const [datetime, setDatetime] = useState(initial?.datetime ?? defaultDateTime(date, cutoff));
   const [type, setType] = useState<FeedingType>(initial?.type ?? initialType ?? "breast");
   const [weights, setWeights] = useState<WeightRow[]>(() => {
@@ -64,26 +65,28 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSa
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  // Id of a feeding created by "Save" in this dialog session, so later
-  // saves update the same record instead of creating duplicates.
-  const [createdId, setCreatedId] = useState<string | null>(null);
-  const recordId = initial?.id ?? createdId;
+  // Ids of the records created by "Save" in this dialog session (add mode),
+  // so later saves update the same records instead of creating duplicates.
+  const [createdBreastId, setCreatedBreastId] = useState<string | null>(null);
+  const [createdBottleId, setCreatedBottleId] = useState<string | null>(null);
 
-  const preview = useMemo(() => {
-    if (type === "breast") {
-      const valid = weights
+  // Valid weight rows (non-empty, parseable). First row is the "before" weight.
+  const validWeights = useMemo(
+    () =>
+      weights
         .filter((r) => r.weight.trim() !== "" && !isNaN(parseFloat(r.weight)))
-        .map((r, i) => ({ weight: parseFloat(r.weight), side: i === 0 ? ("na" as Side) : r.side }));
-      const b = computeBreast(valid);
-      return { left: b.left, right: b.right, total: b.total, formula: 0 };
-    }
-    return {
-      left: 0,
-      right: 0,
-      total: parseFloat(bottleBreast) || 0,
-      formula: parseFloat(bottleFormula) || 0,
-    };
-  }, [type, weights, bottleFormula, bottleBreast]);
+        .map((r, i) => ({
+          weight: parseFloat(r.weight),
+          side: i === 0 ? ("na" as Side) : r.side,
+          time: r.time,
+        })),
+    [weights]
+  );
+  const breastPreview = useMemo(() => computeBreast(validWeights), [validWeights]);
+  const formulaNum = bottleFormula.trim() !== "" ? parseFloat(bottleFormula) : null;
+  const bottleBreastNum = bottleBreast.trim() !== "" ? parseFloat(bottleBreast) : null;
+  const hasBreast = validWeights.length > 0;
+  const hasBottle = formulaNum !== null || bottleBreastNum !== null;
 
   function setWeight(i: number, patch: Partial<WeightRow>) {
     setWeights((ws) => ws.map((w, idx) => (idx === i ? { ...w, ...patch } : w)));
@@ -95,46 +98,100 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSa
     setWeights((ws) => ws.filter((_, idx) => idx !== i));
   }
 
+  async function saveBreast() {
+    const input: FeedingInput = {
+      datetime,
+      type: "breast",
+      weights: validWeights.map((r, i) => ({
+        weight: r.weight,
+        side: i === 0 ? "na" : r.side,
+        ...(r.time ? { time: r.time } : {}),
+      })),
+    };
+    if (createdBreastId) {
+      await updateFeeding(createdBreastId, input);
+    } else {
+      const created = await createFeeding(input);
+      setCreatedBreastId(created.id);
+    }
+  }
+
+  async function saveBottle() {
+    const input: FeedingInput = {
+      datetime,
+      type: "bottle",
+      bottleFormulaMl: formulaNum ?? 0,
+      bottleBreastMl: bottleBreastNum ?? 0,
+    };
+    if (createdBottleId) {
+      await updateFeeding(createdBottleId, input);
+    } else {
+      const created = await createFeeding(input);
+      setCreatedBottleId(created.id);
+    }
+  }
+
   async function doSave(exit: boolean) {
     if (!datetime) {
       setError(t("feeding.needTime"));
       return;
     }
-    const input: FeedingInput = { datetime, type };
-    if (type === "breast") {
-      const valid = weights.filter(
-        (r) => r.weight.trim() !== "" && !isNaN(parseFloat(r.weight))
-      );
-      if (valid.length < 1) {
-        setError(t("feeding.needWeights"));
-        return;
-      }
-      input.weights = valid.map((r, i) => ({
-        weight: parseFloat(r.weight),
-        side: i === 0 ? "na" : r.side,
-        ...(r.time ? { time: r.time } : {}),
-      }));
-    } else {
-      input.bottleFormulaMl = parseFloat(bottleFormula) || 0;
-      input.bottleBreastMl = parseFloat(bottleBreast) || 0;
-    }
     setSaving(true);
     setError(null);
     try {
-      if (recordId) {
-        await updateFeeding(recordId, input);
+      if (isNew) {
+        if (!hasBreast && !hasBottle) {
+          setError(t("feeding.needSomething"));
+          setSaving(false);
+          return;
+        }
+        // Breast
+        if (hasBreast) {
+          await saveBreast();
+        } else if (createdBreastId) {
+          await deleteFeeding(createdBreastId);
+          setCreatedBreastId(null);
+        }
+        // Bottle
+        if (hasBottle) {
+          await saveBottle();
+        } else if (createdBottleId) {
+          await deleteFeeding(createdBottleId);
+          setCreatedBottleId(null);
+        }
+        if (exit) onSubmit();
+        else onSaved?.();
       } else {
-        const created = await createFeeding(input);
-        setCreatedId(created.id);
+        // Edit mode: one record, exactly as before.
+        const input: FeedingInput = { datetime, type };
+        if (type === "breast") {
+          if (validWeights.length < 1) {
+            setError(t("feeding.needWeights"));
+            setSaving(false);
+            return;
+          }
+          input.weights = validWeights.map((r, i) => ({
+            weight: r.weight,
+            side: i === 0 ? "na" : r.side,
+            ...(r.time ? { time: r.time } : {}),
+          }));
+        } else {
+          input.bottleFormulaMl = formulaNum ?? 0;
+          input.bottleBreastMl = bottleBreastNum ?? 0;
+        }
+        await updateFeeding(initial!.id, input);
+        if (exit) onSubmit();
+        else onSaved?.();
       }
-      if (exit) onSubmit();
-      else onSaved?.();
     } catch (e) {
       setError(String(e));
     } finally {
       setSaving(false);
     }
   }
+
+  const showBreast = isNew || type === "breast";
+  const showBottle = isNew || type === "bottle";
 
   return (
     <div className="feed-form">
@@ -147,108 +204,128 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSa
         />
       </label>
 
-      <div className="segmented">
-        <button
-          type="button"
-          className={type === "breast" ? "active" : ""}
-          onClick={() => setType("breast")}
-        >
-          🤱 {t("feeding.breast")}
-        </button>
-        <button
-          type="button"
-          className={type === "bottle" ? "active" : ""}
-          onClick={() => setType("bottle")}
-        >
-          🍼 {t("feeding.bottle")}
-        </button>
-      </div>
-
-      {type === "breast" ? (
-        <div className="weights">
-          <div className="weights-head">
-            <span>{t("feeding.weight")}</span>
-            <span>{t("feeding.side")}</span>
-            <span>{t("feeding.timeCol")}</span>
-          </div>
-          {weights.map((w, i) => (
-            <div className="weight-row" key={i}>
-              <input
-                type="number"
-                inputMode="numeric"
-                placeholder={i === 0 ? t("feeding.before") : t("feeding.after")}
-                value={w.weight}
-                onChange={(e) => setWeight(i, { weight: e.target.value })}
-              />
-              {i === 0 ? (
-                <span className="side-na">{t("feeding.before")}</span>
-              ) : (
-                <select
-                  value={w.side}
-                  onChange={(e) => setWeight(i, { side: e.target.value as Side })}
-                >
-                  <option value="left">{t("feeding.left")}</option>
-                  <option value="right">{t("feeding.right")}</option>
-                  <option value="na">{t("feeding.na")}</option>
-                </select>
-              )}
-              {i === 0 ? (
-                <span className="time-cell" />
-              ) : (
-                <input
-                  type="time"
-                  value={w.time || ""}
-                  onChange={(e) => setWeight(i, { time: e.target.value })}
-                  title={t("feeding.timeTitle")}
-                />
-              )}
-              <button
-                type="button"
-                className="btn icon danger"
-                onClick={() => removeWeight(i)}
-                disabled={weights.length <= 1}
-                aria-label={t("common.remove")}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-          <button type="button" className="btn ghost" onClick={addWeight}>
-            {t("feeding.addWeight")}
+      {!isNew && (
+        <div className="segmented">
+          <button
+            type="button"
+            className={type === "breast" ? "active" : ""}
+            onClick={() => setType("breast")}
+          >
+            🤱 {t("feeding.breast")}
           </button>
-          <div className="preview">
-            {t("feeding.left")} <b>{Math.round(preview.left)} ml</b> ·{" "}
-            {t("feeding.right")} <b>{Math.round(preview.right)} ml</b> ·{" "}
-            <span className="total">
-              {t("item.total")} {Math.round(preview.total)} ml
-            </span>
+          <button
+            type="button"
+            className={type === "bottle" ? "active" : ""}
+            onClick={() => setType("bottle")}
+          >
+            🍼 {t("feeding.bottle")}
+          </button>
+        </div>
+      )}
+
+      {showBreast && (
+        <div className={isNew ? "log-section" : ""}>
+          {isNew && (
+            <div className="log-section-head">
+              <span className="log-emoji">🤱</span>
+              <span>{t("feeding.breast")}</span>
+            </div>
+          )}
+          <div className="weights">
+            <div className="weights-head">
+              <span>{t("feeding.weight")}</span>
+              <span>{t("feeding.side")}</span>
+              <span>{t("feeding.timeCol")}</span>
+            </div>
+            {weights.map((w, i) => (
+              <div className="weight-row" key={i}>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={i === 0 ? t("feeding.before") : t("feeding.after")}
+                  value={w.weight}
+                  onChange={(e) => setWeight(i, { weight: e.target.value })}
+                />
+                {i === 0 ? (
+                  <span className="side-na">{t("feeding.before")}</span>
+                ) : (
+                  <select
+                    value={w.side}
+                    onChange={(e) => setWeight(i, { side: e.target.value as Side })}
+                  >
+                    <option value="left">{t("feeding.left")}</option>
+                    <option value="right">{t("feeding.right")}</option>
+                    <option value="na">{t("feeding.na")}</option>
+                  </select>
+                )}
+                {i === 0 ? (
+                  <span className="time-cell" />
+                ) : (
+                  <input
+                    type="time"
+                    value={w.time || ""}
+                    onChange={(e) => setWeight(i, { time: e.target.value })}
+                    title={t("feeding.timeTitle")}
+                  />
+                )}
+                <button
+                  type="button"
+                  className="btn icon danger"
+                  onClick={() => removeWeight(i)}
+                  disabled={weights.length <= 1}
+                  aria-label={t("common.remove")}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button type="button" className="btn ghost" onClick={addWeight}>
+              {t("feeding.addWeight")}
+            </button>
+            <div className="preview">
+              {t("feeding.left")} <b>{Math.round(breastPreview.left)} ml</b> ·{" "}
+              {t("feeding.right")} <b>{Math.round(breastPreview.right)} ml</b> ·{" "}
+              <span className="total">
+                {t("item.total")} {Math.round(breastPreview.total)} ml
+              </span>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="bottle">
-          <label className="field">
-            <span>{t("feeding.formulaMl")}</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="0"
-              value={bottleFormula}
-              onChange={(e) => setBottleFormula(e.target.value)}
-            />
-          </label>
-          <label className="field">
-            <span>{t("feeding.breastMl")}</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="0"
-              value={bottleBreast}
-              onChange={(e) => setBottleBreast(e.target.value)}
-            />
-          </label>
-          <div className="preview">
-            {t("item.formula")} <b>{Math.round(preview.formula)} ml</b> ·{" "}
-            {t("item.breastMl")} <b>{Math.round(preview.total)} ml</b>
+      )}
+
+      {showBottle && (
+        <div className={isNew ? "log-section" : ""}>
+          {isNew && (
+            <div className="log-section-head">
+              <span className="log-emoji">🍼</span>
+              <span>{t("feeding.bottle")}</span>
+            </div>
+          )}
+          <div className="bottle">
+            <label className="field">
+              <span>{t("feeding.formulaMl")}</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={bottleFormula}
+                onChange={(e) => setBottleFormula(e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span>{t("feeding.breastMl")}</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={bottleBreast}
+                onChange={(e) => setBottleBreast(e.target.value)}
+              />
+            </label>
+            <div className="preview">
+              {t("item.formula")} <b>{Math.round(formulaNum ?? 0)} ml</b> ·{" "}
+              {t("item.breastMl")} <b>{Math.round(bottleBreastNum ?? 0)} ml</b>
+            </div>
           </div>
         </div>
       )}
