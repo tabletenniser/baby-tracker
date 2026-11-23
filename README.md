@@ -64,7 +64,7 @@ Two tabs:
 ### Entry details
 - **First-run setup** — asks for the baby's name, birthday, and sex.
 - **Feedings** (with historical backfilling): defaults to the current time, but you can change it and navigate to past days.
-  - The **🤱 Breast** and **🍼 Bottle** buttons open a combined form: enter breast weights and/or bottle milk in the same dialog and both are recorded at the same timestamp. Leaving a section blank records nothing for it.
+  - The **🤱 Breast** and **🍼 Bottle** buttons open a form with two tabs (Breast / Bottle). Enter breast weights and/or bottle milk across the tabs — a dot marks a tab that has data — and **Save** records both at the same timestamp. Leaving a tab blank records nothing for it.
   - **Breast (weight method):** enter multiple weights; the first is the "before" weight, each later one is tagged **Left / Right / N/A** and can have an optional **time** (when that weight was taken). The app calculates the amount fed for each breast, and — when times are given — how long each breast took (shown in the timeline, e.g. "L 30 ml (7m) · R 30 ml (13m)"). The "before" weight also feeds the growth chart. You can **save with just a "before" weight** (it shows as "before weight only") and add more weights later by editing the entry.
   - **Bottle:** enter formula milk (ml) and breast milk (ml). Leave a field empty to treat it as zero.
   - Number fields use **direct entry** (no up/down spinner) so you can type amounts quickly.

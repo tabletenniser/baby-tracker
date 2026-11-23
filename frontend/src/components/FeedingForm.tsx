@@ -140,6 +140,7 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSa
     setError(null);
     try {
       if (isNew) {
+        // Add mode: save whichever tabs have data (both, one, or neither).
         if (!hasBreast && !hasBottle) {
           setError(t("feeding.needSomething"));
           setSaving(false);
@@ -190,9 +191,6 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSa
     }
   }
 
-  const showBreast = isNew || type === "breast";
-  const showBottle = isNew || type === "bottle";
-
   return (
     <div className="feed-form">
       <label className="field">
@@ -204,128 +202,110 @@ export function FeedingForm({ date, cutoff, initial, initialType, onSubmit, onSa
         />
       </label>
 
-      {!isNew && (
-        <div className="segmented">
-          <button
-            type="button"
-            className={type === "breast" ? "active" : ""}
-            onClick={() => setType("breast")}
-          >
-            🤱 {t("feeding.breast")}
-          </button>
-          <button
-            type="button"
-            className={type === "bottle" ? "active" : ""}
-            onClick={() => setType("bottle")}
-          >
-            🍼 {t("feeding.bottle")}
-          </button>
-        </div>
-      )}
+      <div className="segmented">
+        <button
+          type="button"
+          className={type === "breast" ? "active" : ""}
+          onClick={() => setType("breast")}
+        >
+          🤱 {t("feeding.breast")}
+          {isNew && hasBreast && <span className="tab-dot">•</span>}
+        </button>
+        <button
+          type="button"
+          className={type === "bottle" ? "active" : ""}
+          onClick={() => setType("bottle")}
+        >
+          🍼 {t("feeding.bottle")}
+          {isNew && hasBottle && <span className="tab-dot">•</span>}
+        </button>
+      </div>
 
-      {showBreast && (
-        <div className={isNew ? "log-section" : ""}>
-          {isNew && (
-            <div className="log-section-head">
-              <span className="log-emoji">🤱</span>
-              <span>{t("feeding.breast")}</span>
-            </div>
-          )}
-          <div className="weights">
-            <div className="weights-head">
-              <span>{t("feeding.weight")}</span>
-              <span>{t("feeding.side")}</span>
-              <span>{t("feeding.timeCol")}</span>
-            </div>
-            {weights.map((w, i) => (
-              <div className="weight-row" key={i}>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder={i === 0 ? t("feeding.before") : t("feeding.after")}
-                  value={w.weight}
-                  onChange={(e) => setWeight(i, { weight: e.target.value })}
-                />
-                {i === 0 ? (
-                  <span className="side-na">{t("feeding.before")}</span>
-                ) : (
-                  <select
-                    value={w.side}
-                    onChange={(e) => setWeight(i, { side: e.target.value as Side })}
-                  >
-                    <option value="left">{t("feeding.left")}</option>
-                    <option value="right">{t("feeding.right")}</option>
-                    <option value="na">{t("feeding.na")}</option>
-                  </select>
-                )}
-                {i === 0 ? (
-                  <span className="time-cell" />
-                ) : (
-                  <input
-                    type="time"
-                    value={w.time || ""}
-                    onChange={(e) => setWeight(i, { time: e.target.value })}
-                    title={t("feeding.timeTitle")}
-                  />
-                )}
-                <button
-                  type="button"
-                  className="btn icon danger"
-                  onClick={() => removeWeight(i)}
-                  disabled={weights.length <= 1}
-                  aria-label={t("common.remove")}
+      {type === "breast" ? (
+        <div className="weights">
+          <div className="weights-head">
+            <span>{t("feeding.weight")}</span>
+            <span>{t("feeding.side")}</span>
+            <span>{t("feeding.timeCol")}</span>
+          </div>
+          {weights.map((w, i) => (
+            <div className="weight-row" key={i}>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder={i === 0 ? t("feeding.before") : t("feeding.after")}
+                value={w.weight}
+                onChange={(e) => setWeight(i, { weight: e.target.value })}
+              />
+              {i === 0 ? (
+                <span className="side-na">{t("feeding.before")}</span>
+              ) : (
+                <select
+                  value={w.side}
+                  onChange={(e) => setWeight(i, { side: e.target.value as Side })}
                 >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button type="button" className="btn ghost" onClick={addWeight}>
-              {t("feeding.addWeight")}
-            </button>
-            <div className="preview">
-              {t("feeding.left")} <b>{Math.round(breastPreview.left)} ml</b> ·{" "}
-              {t("feeding.right")} <b>{Math.round(breastPreview.right)} ml</b> ·{" "}
-              <span className="total">
-                {t("item.total")} {Math.round(breastPreview.total)} ml
-              </span>
+                  <option value="left">{t("feeding.left")}</option>
+                  <option value="right">{t("feeding.right")}</option>
+                  <option value="na">{t("feeding.na")}</option>
+                </select>
+              )}
+              {i === 0 ? (
+                <span className="time-cell" />
+              ) : (
+                <input
+                  type="time"
+                  value={w.time || ""}
+                  onChange={(e) => setWeight(i, { time: e.target.value })}
+                  title={t("feeding.timeTitle")}
+                />
+              )}
+              <button
+                type="button"
+                className="btn icon danger"
+                onClick={() => removeWeight(i)}
+                disabled={weights.length <= 1}
+                aria-label={t("common.remove")}
+              >
+                ✕
+              </button>
             </div>
+          ))}
+          <button type="button" className="btn ghost" onClick={addWeight}>
+            {t("feeding.addWeight")}
+          </button>
+          <div className="preview">
+            {t("feeding.left")} <b>{Math.round(breastPreview.left)} ml</b> ·{" "}
+            {t("feeding.right")} <b>{Math.round(breastPreview.right)} ml</b> ·{" "}
+            <span className="total">
+              {t("item.total")} {Math.round(breastPreview.total)} ml
+            </span>
           </div>
         </div>
-      )}
-
-      {showBottle && (
-        <div className={isNew ? "log-section" : ""}>
-          {isNew && (
-            <div className="log-section-head">
-              <span className="log-emoji">🍼</span>
-              <span>{t("feeding.bottle")}</span>
-            </div>
-          )}
-          <div className="bottle">
-            <label className="field">
-              <span>{t("feeding.formulaMl")}</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={bottleFormula}
-                onChange={(e) => setBottleFormula(e.target.value)}
-              />
-            </label>
-            <label className="field">
-              <span>{t("feeding.breastMl")}</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={bottleBreast}
-                onChange={(e) => setBottleBreast(e.target.value)}
-              />
-            </label>
-            <div className="preview">
-              {t("item.formula")} <b>{Math.round(formulaNum ?? 0)} ml</b> ·{" "}
-              {t("item.breastMl")} <b>{Math.round(bottleBreastNum ?? 0)} ml</b>
-            </div>
+      ) : (
+        <div className="bottle">
+          <label className="field">
+            <span>{t("feeding.formulaMl")}</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="0"
+              value={bottleFormula}
+              onChange={(e) => setBottleFormula(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>{t("feeding.breastMl")}</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="0"
+              value={bottleBreast}
+              onChange={(e) => setBottleBreast(e.target.value)}
+            />
+          </label>
+          <div className="preview">
+            {t("item.formula")} <b>{Math.round(formulaNum ?? 0)} ml</b> ·{" "}
+            {t("item.breastMl")} <b>{Math.round(bottleBreastNum ?? 0)} ml</b>
           </div>
         </div>
       )}
